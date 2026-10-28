@@ -11,4 +11,5 @@ Thumbs.db
 *.pyc
 .project
 .cproject
-builtins
+/builtins
+.deps/**
