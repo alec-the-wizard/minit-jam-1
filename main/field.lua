@@ -19,8 +19,8 @@ M.CARD_H_RATIO = CARD_H_PX / SPRITE_PX
 local HUD_UNITS = 2.0
 local SIDE_UNITS = 0.35
 local BOTTOM_UNITS = 0.35
---- Sprite square size; the card body is ~1.25 x 1.78 units.
-local CARD_UNITS = 1.9
+--- Sprite square size; the card body is ~1.76 x 2.52 units.
+local CARD_UNITS = 2.69
 --- Space kept between two card bodies when a table is dealt.
 local GAP_UNITS = 0.28
 --- Share of the spawn cells that may be occupied. Above this the cards spend
