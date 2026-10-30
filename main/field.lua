@@ -22,11 +22,11 @@ local BOTTOM_UNITS = 0.35
 --- Sprite square size; the card body is ~1.76 x 2.52 units.
 local CARD_UNITS = 2.69
 --- Space kept between two card bodies when a table is dealt.
-local GAP_UNITS = 0.28
+local GAP_UNITS = 0.41
 --- Share of the spawn cells that may be occupied. Above this the cards spend
 --- all their time colliding instead of moving.
-local CELL_FILL = 0.35
-local MAX_PAIRS = 8
+local CELL_FILL = 0.45
+local MAX_PAIRS = 6
 
 ---@class field.Metrics
 ---@field unit number
