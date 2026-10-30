@@ -1,0 +1,18 @@
+embedded_components {
+  id: "label"
+  type: "label"
+  data: "size {\n"
+  "  x: 640.0\n"
+  "  y: 96.0\n"
+  "}\n"
+  "color {\n"
+  "  x: 0.85\n"
+  "  y: 0.95\n"
+  "  z: 0.9\n"
+  "  w: 1.0\n"
+  "}\n"
+  "text: \"2 pairs\"\n"
+  "font: \"/assets/fonts/game.font\"\n"
+  "material: \"/builtins/fonts/label-df.material\"\n"
+  ""
+}

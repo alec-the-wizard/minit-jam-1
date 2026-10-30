@@ -1,0 +1,12 @@
+animations {
+  id: "table"
+  images {
+    image: "/assets/ui/table_bg.png"
+  }
+}
+animations {
+  id: "glow"
+  images {
+    image: "/assets/ui/glow.png"
+  }
+}

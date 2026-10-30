@@ -1,71 +1,301 @@
--- YOUR GAME. The only file you have to edit: replace the parts marked
--- PLACEHOLDER with your own. Everything in minit_platform/ is what makes a
--- Defold game work inside the Minit app; leave it alone.
+-- Memory: find pairs on a table of sliding cards before the clock runs out.
 --
--- What every Minit game does:
---   * minit.loading_done()   -- last line of init, once the scene is built
---   * minit.report_result()  -- exactly once, when the game clearly ends
---   * audio.set_active(true) -- on the first tap, so sound starts after the
---                               browser lets the page play audio
---   * layout.refresh()       -- no design resolution; rebuild from the viewport
-
+-- The rules live here, the table geometry in main/field.lua, the card
+-- simulation in main/cards.lua and the face pool in main/deck.lua.
 local minit  = require("minit.minit")
 local layout = require("minit_platform.layout")
 local audio  = require("minit_platform.audio")
 
-local ROUND_SECONDS = 10                      -- PLACEHOLDER
-local FONT_SIZE = 48                          -- the size assets/fonts/game.font is baked at
+local field = require("main.field")
+local deck  = require("main.deck")
+local cards = require("main.cards")
+
+local FONT_SIZE = 48
+local HUD_FONT_UNITS = 0.72       -- label size in layout units
+local HUD_HINT_SCALE = 0.62       -- the middle label is smaller
+local HUD_TOP_UNITS = 1.0         -- label centre, measured from the top edge
+local HUD_SIDE_UNITS = 0.35
+local HUD_Z = 0.5
+local HUD_LOW_SECONDS = 10
+local TABLE_PAUSE = 0.55          -- beat between a cleared table and the next
+local BOUNCE_SOUND_GAP = 0.08
+local POP_UNITS = 2.2             -- size of the match flash
+local REPORT_DELAY_MS = 1000      -- let the last table show before the result
+
+local function number_config(key, fallback, low, high)
+    local value = tonumber(minit.get_config_value(key, ""))
+    if not value then
+        return fallback
+    end
+    return math.max(low, math.min(high, value))
+end
 
 local function read_config()
-    -- Declare each key in meta.json "config", then read it here, e.g.:
-    -- local speed = tonumber(minit.get_config_value("speed", "")) or 1
-    return {}
+    local config = {
+        round_seconds = number_config("round_seconds", 60, 15, 180),
+        start_pairs = math.floor(number_config("start_pairs", 2, 2, 12)),
+        max_pairs = math.floor(number_config("max_pairs", 8, 3, 12)),
+        card_speed = number_config("card_speed", 2.0, 0.0, 5.0),
+        reveal_seconds = number_config("reveal_seconds", 1.5, 0.4, 5.0),
+        score_per_pair = math.floor(number_config("score_per_pair", 10, 1, 100)),
+    }
+    if config.max_pairs < config.start_pairs then
+        config.max_pairs = config.start_pairs
+    end
+    return config
 end
 
--- Center the label and size it from the viewport.
-local function relayout()
-    go.set_position(vmath.vector3(layout.width * 0.5, layout.height * 0.5, 0), "game")
-    go.set_scale(layout.unit * 0.8 / FONT_SIZE, "game")
+local function spawn_pop(x, y, size)
+    factory.create(msg.url("#pop_factory"), vmath.vector3(x, y, 0.5), nil, { radius = size })
 end
 
-local function finish(self, score, flavor_text)
-    if self.finished then return end          -- report_result exactly once
+local function label_url(id)
+    return msg.url(nil, id, "label")
+end
+
+local function set_label_text(id, text)
+    go.set(label_url(id), "text", text)
+end
+
+local function set_hint(self, text)
+    self.hint = text
+    set_label_text(self.hint_id, text)
+end
+
+local function place_scene(self)
+    -- The game object sits in the middle of the screen so the 1x1 background
+    -- quad can be stretched over the viewport. The labels are their own game
+    -- objects and are placed in the same pixel space as the cards.
+    go.set_position(vmath.vector3(layout.width * 0.5, layout.height * 0.5, 0))
+    go.set("#background", "size", vmath.vector3(layout.width, layout.height, 1))
+
+    local unit = layout.unit
+    local scale = HUD_FONT_UNITS * unit / FONT_SIZE
+    local centre_y = layout.height - HUD_TOP_UNITS * unit
+    local margin = HUD_SIDE_UNITS * unit
+
+    go.set_position(vmath.vector3(margin, centre_y, HUD_Z), self.score_id)
+    go.set_scale(scale, self.score_id)
+
+    go.set_position(vmath.vector3(layout.width - margin, centre_y, HUD_Z), self.time_id)
+    go.set_scale(scale, self.time_id)
+
+    go.set_position(vmath.vector3(layout.width * 0.5, centre_y, HUD_Z), self.hint_id)
+    go.set_scale(scale * HUD_HINT_SCALE, self.hint_id)
+end
+
+local function format_clock(seconds)
+    return ("%d:%02d"):format(math.floor(seconds / 60), seconds % 60)
+end
+
+local function refresh_hud(self)
+    local whole = math.max(0, math.ceil(self.time_left))
+    local score_text = ("Score %d"):format(self.score)
+    local clock_text = format_clock(whole)
+    local low = whole <= HUD_LOW_SECONDS
+
+    if score_text ~= self.score_text then
+        self.score_text = score_text
+        set_label_text(self.score_id, score_text)
+    end
+
+    if clock_text ~= self.clock_text then
+        self.clock_text = clock_text
+        set_label_text(self.time_id, clock_text)
+    end
+
+    if low ~= self.low_time then
+        self.low_time = low
+        local color = low and vmath.vector4(1.0, 0.42, 0.36, 1.0)
+            or vmath.vector4(1.0, 0.97, 0.85, 1.0)
+        go.set(label_url(self.time_id), "color", color)
+    end
+end
+
+local function flavour_text(stats)
+    if stats.tables >= 2 then
+        return ("%d tables cleared, %d pairs in a row"):format(stats.tables, stats.best_streak)
+    end
+    if stats.best_streak >= 3 then
+        return ("Best streak: %d pairs in a row"):format(stats.best_streak)
+    end
+    if stats.pairs == 0 then
+        return "No pairs found - the cards were too quick"
+    end
+    if stats.misses > stats.pairs * 2 then
+        return ("%d pairs, %d misses"):format(stats.pairs, stats.misses)
+    end
+    return ("%d pairs found"):format(stats.pairs)
+end
+
+local function on_pair(self, a, b)
+    self.score = self.score + self.config.score_per_pair
+    self.stats.pairs = self.stats.pairs + 1
+    self.stats.streak = self.stats.streak + 1
+    self.stats.best_streak = math.max(self.stats.best_streak, self.stats.streak)
+
+    local size = POP_UNITS * layout.unit
+    spawn_pop(a.x, a.y, size)
+    spawn_pop(b.x, b.y, size)
+    audio.play("finish", { gain = 0.45, speed = 1.0 + math.min(0.5, self.stats.streak * 0.06) })
+end
+
+local function on_miss(self)
+    self.stats.misses = self.stats.misses + 1
+    self.stats.streak = 0
+    audio.play("bounce", { gain = 0.7, speed = 0.7 })
+end
+
+local function on_bounce(self)
+    if self.bounce_sound > 0 then
+        return
+    end
+    self.bounce_sound = BOUNCE_SOUND_GAP
+    audio.play("bounce", { gain = 0.22, speed = 0.9 + math.random() * 0.35 })
+end
+
+local function start_table(self)
+    local wanted = math.min(self.pairs, self.max_pairs)
+    self.table_pairs = wanted
+    local speed = math.min(self.config.card_speed * 2.6,
+        self.config.card_speed * (1 + 0.09 * (self.level - 1)))
+
+    self.cards = cards.new({
+        unit = layout.unit,
+        metrics = self.metrics,
+        speed = speed,
+        factory = self.card_factory,
+        reveal = self.config.reveal_seconds,
+        on_pair = function(a, b) on_pair(self, a, b) end,
+        on_miss = function(a, b) on_miss(self, a, b) end,
+        on_bounce = function(x, y) on_bounce(self, x, y) end,
+    })
+    cards.spawn(self.cards, deck.pick(wanted))
+    set_hint(self, ("%d pairs"):format(wanted))
+    print(("[memory] table %d: %d pairs, speed %.2f"):format(self.level, wanted, speed))
+end
+
+local function clear_table(self)
+    self.stats.tables = self.stats.tables + 1
+    self.score = self.score + self.table_pairs * self.config.score_per_pair
+    self.level = self.level + 1
+    self.pairs = math.min(self.pairs + 1, self.max_pairs)
+    self.next_table = TABLE_PAUSE
+    set_hint(self, "Cleared!")
+    print(("[memory] table cleared, score %d, next %d pairs"):format(self.score, self.pairs))
+end
+
+local function finish(self)
+    if self.finished then
+        return
+    end
     self.finished = true
-    -- `delay` (ms) holds the host's result screen back so the ending is seen.
-    -- To keep a best score between runs, also pass user_data = "..." here and
-    -- read it back with minit.get_user_data() in init.
-    minit.report_result(score, { flavor_text = flavor_text, delay = 800 })
+    if self.cards then
+        cards.reveal_all(self.cards)
+    end
+    audio.play("finish", { gain = 1.0, speed = 0.6 })
+    print(("[memory] time up: score %d, %d pairs, %d misses"):format(
+        self.score, self.stats.pairs, self.stats.misses))
+    minit.report_result(self.score, {
+        flavor_text = flavour_text(self.stats),
+        delay = REPORT_DELAY_MS,
+    })
+end
+
+local function rebuild(self)
+    self.metrics = field.measure(layout.width, layout.height, layout.unit)
+    self.max_pairs = math.max(2, math.min(self.config.max_pairs, field.capacity(self.metrics)))
+    self.start_pairs = math.max(2, math.min(self.config.start_pairs, self.max_pairs))
+    if self.pairs then
+        self.pairs = math.min(self.pairs, self.max_pairs)
+    end
+    place_scene(self)
+    if self.cards then
+        cards.reflow(self.cards, self.metrics, layout.unit)
+    end
 end
 
 function init(self)
     msg.post(".", "acquire_input_focus")
-    self.config = read_config()
     audio.init()
+    math.randomseed(os.time())
+
+    self.config = read_config()
+    self.card_factory = msg.url("#card_factory")
+    self.score_id = factory.create(msg.url("#score_factory"), vmath.vector3(0, 0, HUD_Z))
+    self.time_id = factory.create(msg.url("#time_factory"), vmath.vector3(0, 0, HUD_Z))
+    self.hint_id = factory.create(msg.url("#hint_factory"), vmath.vector3(0, 0, HUD_Z))
+    self.score = 0
+    self.score_text = ""
+    self.time_left = self.config.round_seconds
+    self.clock_text = ""
+    self.low_time = false
+    self.hint = ""
+    self.level = 1
+    self.bounce_sound = 0
+    self.finished = false
+    self.stats = { pairs = 0, misses = 0, streak = 0, best_streak = 0, tables = 0 }
+
     layout.refresh()
-    relayout()
-    -- PLACEHOLDER: a 10 s tap round -- replace with your scene
-    self.taps, self.time_left = 0, ROUND_SECONDS
-    minit.loading_done()                      -- last line: the game is ready
+    rebuild(self)
+    self.pairs = self.start_pairs
+    refresh_hud(self)
+    start_table(self)
+
+    print(("[memory] start: %.0f s, %d..%d pairs, %d faces"):format(
+        self.config.round_seconds, self.start_pairs, self.max_pairs, deck.count()))
+    minit.loading_done()
 end
 
 function update(self, dt)
-    if layout.refresh() then relayout() end
-    if self.finished then return end
-    -- PLACEHOLDER: the round ends on time -- every game needs a clear end
-    self.time_left = math.max(0, self.time_left - dt)
-    label.set_text("#label", ("%d taps   %d s"):format(self.taps, math.ceil(self.time_left)))
-    if self.time_left == 0 then
-        label.set_text("#label", ("Time's up!\n%d taps"):format(self.taps))
-        finish(self, self.taps, self.taps .. " taps in " .. ROUND_SECONDS .. " seconds")
+    if layout.refresh() then
+        rebuild(self)
+    end
+
+    if self.bounce_sound > 0 then
+        self.bounce_sound = math.max(0, self.bounce_sound - dt)
+    end
+
+    if not self.finished then
+        self.time_left = math.max(0, self.time_left - dt)
+        refresh_hud(self)
+        if self.time_left <= 0 then
+            finish(self)
+        end
+    end
+
+    if self.cards then
+        cards.update(self.cards, dt)
+    end
+
+    if self.finished then
+        return
+    end
+
+    if self.cards and cards.count(self.cards) == 0 and not self.next_table then
+        clear_table(self)
+    end
+
+    if self.next_table then
+        self.next_table = self.next_table - dt
+        if self.next_table <= 0 then
+            self.next_table = nil
+            start_table(self)
+        end
     end
 end
 
 function on_input(self, action_id, action)
-    if action_id ~= hash("touch") or not action.pressed then return end
-    audio.set_active(true)                    -- first tap unlocks sound
-    if self.finished then return end
-    -- Where the tap landed, in the same pixels layout.width/height use:
-    -- local x, y = layout.to_world(action.x, action.y)
-    -- PLACEHOLDER: count taps -- replace with your game
-    self.taps = self.taps + 1
+    if action_id ~= hash("touch") or not action.pressed then
+        return
+    end
+    audio.set_active(true)
+    if self.finished or not self.cards then
+        return
+    end
+
+    local x, y = layout.to_world(action.x, action.y)
+    if cards.pick(self.cards, x, y) then
+        audio.play("tap", { gain = 0.7, speed = 0.95 + math.random() * 0.1 })
+    end
 end

@@ -1,0 +1,22 @@
+-- Short flash left behind by a matched pair. Spawned by main/game.script with
+-- a `radius` in world pixels, it grows once, fades out and deletes itself.
+go.property("radius", 128.0)
+
+local DURATION = 0.34
+
+function init(self)
+    self.elapsed = 0
+    local full = vmath.vector3(self.radius, self.radius, 1)
+    local from = vmath.vector3(self.radius * 0.35, self.radius * 0.35, 1)
+    go.set_scale(from)
+    go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, full, go.EASING_OUTQUAD, DURATION)
+end
+
+function update(self, dt)
+    self.elapsed = self.elapsed + dt
+    local fade = math.max(0, 1 - self.elapsed / DURATION)
+    go.set("#sprite", "tint", vmath.vector4(1.0, 0.96, 0.72, fade * 0.85))
+    if self.elapsed >= DURATION then
+        go.delete()
+    end
+end

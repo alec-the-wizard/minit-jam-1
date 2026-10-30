@@ -1,5 +1,5 @@
 [project]
-title = My Minit
+title = Card Rush
 version = 1.0
 dependencies#0 = https://github.com/Minit-Games/minit-defold/archive/refs/tags/v1.17.0.zip
 

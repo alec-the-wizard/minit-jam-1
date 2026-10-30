@@ -1,0 +1,336 @@
+animations {
+  id: "back"
+  images {
+    image: "/assets/cards/card_back.png"
+  }
+}
+animations {
+  id: "clubs_02"
+  images {
+    image: "/assets/cards/card_clubs_02.png"
+  }
+}
+animations {
+  id: "clubs_03"
+  images {
+    image: "/assets/cards/card_clubs_03.png"
+  }
+}
+animations {
+  id: "clubs_04"
+  images {
+    image: "/assets/cards/card_clubs_04.png"
+  }
+}
+animations {
+  id: "clubs_05"
+  images {
+    image: "/assets/cards/card_clubs_05.png"
+  }
+}
+animations {
+  id: "clubs_06"
+  images {
+    image: "/assets/cards/card_clubs_06.png"
+  }
+}
+animations {
+  id: "clubs_07"
+  images {
+    image: "/assets/cards/card_clubs_07.png"
+  }
+}
+animations {
+  id: "clubs_08"
+  images {
+    image: "/assets/cards/card_clubs_08.png"
+  }
+}
+animations {
+  id: "clubs_09"
+  images {
+    image: "/assets/cards/card_clubs_09.png"
+  }
+}
+animations {
+  id: "clubs_10"
+  images {
+    image: "/assets/cards/card_clubs_10.png"
+  }
+}
+animations {
+  id: "clubs_A"
+  images {
+    image: "/assets/cards/card_clubs_A.png"
+  }
+}
+animations {
+  id: "clubs_J"
+  images {
+    image: "/assets/cards/card_clubs_J.png"
+  }
+}
+animations {
+  id: "clubs_K"
+  images {
+    image: "/assets/cards/card_clubs_K.png"
+  }
+}
+animations {
+  id: "clubs_Q"
+  images {
+    image: "/assets/cards/card_clubs_Q.png"
+  }
+}
+animations {
+  id: "diamonds_02"
+  images {
+    image: "/assets/cards/card_diamonds_02.png"
+  }
+}
+animations {
+  id: "diamonds_03"
+  images {
+    image: "/assets/cards/card_diamonds_03.png"
+  }
+}
+animations {
+  id: "diamonds_04"
+  images {
+    image: "/assets/cards/card_diamonds_04.png"
+  }
+}
+animations {
+  id: "diamonds_05"
+  images {
+    image: "/assets/cards/card_diamonds_05.png"
+  }
+}
+animations {
+  id: "diamonds_06"
+  images {
+    image: "/assets/cards/card_diamonds_06.png"
+  }
+}
+animations {
+  id: "diamonds_07"
+  images {
+    image: "/assets/cards/card_diamonds_07.png"
+  }
+}
+animations {
+  id: "diamonds_08"
+  images {
+    image: "/assets/cards/card_diamonds_08.png"
+  }
+}
+animations {
+  id: "diamonds_09"
+  images {
+    image: "/assets/cards/card_diamonds_09.png"
+  }
+}
+animations {
+  id: "diamonds_10"
+  images {
+    image: "/assets/cards/card_diamonds_10.png"
+  }
+}
+animations {
+  id: "diamonds_A"
+  images {
+    image: "/assets/cards/card_diamonds_A.png"
+  }
+}
+animations {
+  id: "diamonds_J"
+  images {
+    image: "/assets/cards/card_diamonds_J.png"
+  }
+}
+animations {
+  id: "diamonds_K"
+  images {
+    image: "/assets/cards/card_diamonds_K.png"
+  }
+}
+animations {
+  id: "diamonds_Q"
+  images {
+    image: "/assets/cards/card_diamonds_Q.png"
+  }
+}
+animations {
+  id: "empty"
+  images {
+    image: "/assets/cards/card_empty.png"
+  }
+}
+animations {
+  id: "hearts_02"
+  images {
+    image: "/assets/cards/card_hearts_02.png"
+  }
+}
+animations {
+  id: "hearts_03"
+  images {
+    image: "/assets/cards/card_hearts_03.png"
+  }
+}
+animations {
+  id: "hearts_04"
+  images {
+    image: "/assets/cards/card_hearts_04.png"
+  }
+}
+animations {
+  id: "hearts_05"
+  images {
+    image: "/assets/cards/card_hearts_05.png"
+  }
+}
+animations {
+  id: "hearts_06"
+  images {
+    image: "/assets/cards/card_hearts_06.png"
+  }
+}
+animations {
+  id: "hearts_07"
+  images {
+    image: "/assets/cards/card_hearts_07.png"
+  }
+}
+animations {
+  id: "hearts_08"
+  images {
+    image: "/assets/cards/card_hearts_08.png"
+  }
+}
+animations {
+  id: "hearts_09"
+  images {
+    image: "/assets/cards/card_hearts_09.png"
+  }
+}
+animations {
+  id: "hearts_10"
+  images {
+    image: "/assets/cards/card_hearts_10.png"
+  }
+}
+animations {
+  id: "hearts_A"
+  images {
+    image: "/assets/cards/card_hearts_A.png"
+  }
+}
+animations {
+  id: "hearts_J"
+  images {
+    image: "/assets/cards/card_hearts_J.png"
+  }
+}
+animations {
+  id: "hearts_K"
+  images {
+    image: "/assets/cards/card_hearts_K.png"
+  }
+}
+animations {
+  id: "hearts_Q"
+  images {
+    image: "/assets/cards/card_hearts_Q.png"
+  }
+}
+animations {
+  id: "joker_black"
+  images {
+    image: "/assets/cards/card_joker_black.png"
+  }
+}
+animations {
+  id: "joker_red"
+  images {
+    image: "/assets/cards/card_joker_red.png"
+  }
+}
+animations {
+  id: "spades_02"
+  images {
+    image: "/assets/cards/card_spades_02.png"
+  }
+}
+animations {
+  id: "spades_03"
+  images {
+    image: "/assets/cards/card_spades_03.png"
+  }
+}
+animations {
+  id: "spades_04"
+  images {
+    image: "/assets/cards/card_spades_04.png"
+  }
+}
+animations {
+  id: "spades_05"
+  images {
+    image: "/assets/cards/card_spades_05.png"
+  }
+}
+animations {
+  id: "spades_06"
+  images {
+    image: "/assets/cards/card_spades_06.png"
+  }
+}
+animations {
+  id: "spades_07"
+  images {
+    image: "/assets/cards/card_spades_07.png"
+  }
+}
+animations {
+  id: "spades_08"
+  images {
+    image: "/assets/cards/card_spades_08.png"
+  }
+}
+animations {
+  id: "spades_09"
+  images {
+    image: "/assets/cards/card_spades_09.png"
+  }
+}
+animations {
+  id: "spades_10"
+  images {
+    image: "/assets/cards/card_spades_10.png"
+  }
+}
+animations {
+  id: "spades_A"
+  images {
+    image: "/assets/cards/card_spades_A.png"
+  }
+}
+animations {
+  id: "spades_J"
+  images {
+    image: "/assets/cards/card_spades_J.png"
+  }
+}
+animations {
+  id: "spades_K"
+  images {
+    image: "/assets/cards/card_spades_K.png"
+  }
+}
+animations {
+  id: "spades_Q"
+  images {
+    image: "/assets/cards/card_spades_Q.png"
+  }
+}
