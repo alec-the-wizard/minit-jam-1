@@ -90,7 +90,7 @@ end
 
 local function refresh_hud(self)
     local whole = math.max(0, math.ceil(self.time_left))
-    local score_text = ("Score %d"):format(self.score)
+    local score_text = ("%d"):format(self.score)
     local clock_text = format_clock(whole)
     local low = whole <= HUD_LOW_SECONDS
 

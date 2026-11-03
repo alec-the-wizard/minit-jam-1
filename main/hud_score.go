@@ -12,7 +12,7 @@ embedded_components {
   "  w: 1.0\n"
   "}\n"
   "pivot: PIVOT_W\n"
-  "text: \"Score 0\"\n"
+  "text: \"0\"\n"
   "font: \"/assets/fonts/game.font\"\n"
   "material: \"/builtins/fonts/label-df.material\"\n"
   ""
