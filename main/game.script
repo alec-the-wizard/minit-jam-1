@@ -143,7 +143,10 @@ local function flavour_text(stats)
 end
 
 local function on_pair(self, a, b)
-    self.score = self.score + self.config.score_per_pair
+    -- Every earlier match in the current streak adds one bonus point, so the
+    -- first match scores the base value and each following one scores more.
+    local streak_bonus = self.stats.streak
+    self.score = self.score + self.config.score_per_pair + streak_bonus
     self.stats.pairs = self.stats.pairs + 1
     self.stats.streak = self.stats.streak + 1
     self.stats.best_streak = math.max(self.stats.best_streak, self.stats.streak)
