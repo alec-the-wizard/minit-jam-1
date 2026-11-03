@@ -62,6 +62,21 @@ local function set_hint(self, text)
     set_label_text(self.hint_id, text)
 end
 
+-- The hint label names the difficulty of the current table instead of the
+-- pair count. Anything past four pairs is already "Impossible!".
+local function difficulty_name(pairs)
+    if pairs <= 2 then
+        return "Easy"
+    end
+    if pairs == 3 then
+        return "Medium"
+    end
+    if pairs == 4 then
+        return "Hard"
+    end
+    return "Impossible!"
+end
+
 local function place_scene(self)
     -- The game object sits in the middle of the screen so the 1x1 background
     -- quad can be stretched over the viewport. The labels are their own game
@@ -171,7 +186,7 @@ local function start_table(self)
         on_bounce = function(x, y) on_bounce(self, x, y) end,
     })
     cards.spawn(self.cards, deck.pick(wanted))
-    set_hint(self, ("%d pairs"):format(wanted))
+    set_hint(self, difficulty_name(wanted))
     print(("[memory] table %d: %d pairs, speed %.2f"):format(self.level, wanted, speed))
 end
 

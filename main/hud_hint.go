@@ -11,7 +11,7 @@ embedded_components {
   "  z: 0.9\n"
   "  w: 1.0\n"
   "}\n"
-  "text: \"2 pairs\"\n"
+  "text: \"Easy\"\n"
   "font: \"/assets/fonts/game.font\"\n"
   "material: \"/builtins/fonts/label-df.material\"\n"
   ""
