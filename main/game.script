@@ -12,7 +12,6 @@ local cards = require("main.cards")
 
 local FONT_SIZE = 48
 local HUD_FONT_UNITS = 0.72       -- label size in layout units
-local HUD_HINT_SCALE = 0.62       -- the middle label is smaller
 local HUD_TOP_UNITS = 1.0         -- label centre, measured from the top edge
 local HUD_SIDE_UNITS = 0.35
 local HUD_Z = 0.5
@@ -96,7 +95,7 @@ local function place_scene(self)
     go.set_scale(scale, self.time_id)
 
     go.set_position(vmath.vector3(layout.width * 0.5, centre_y, HUD_Z), self.hint_id)
-    go.set_scale(scale * HUD_HINT_SCALE, self.hint_id)
+    go.set_scale(scale, self.hint_id)
 end
 
 local function format_clock(seconds)
