@@ -18,7 +18,7 @@
     {
       "key": "start_pairs",
       "valueType": "number",
-      "value": 2,
+      "value": 3,
       "min": 2,
       "max": 8,
       "description": "Pairs on the first table."
