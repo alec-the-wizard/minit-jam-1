@@ -259,6 +259,7 @@ function init(self)
     self.score_text = ""
     self.time_left = self.config.round_seconds
     self.clock_text = ""
+    self.clock_started = false
     self.low_time = false
     self.hint = ""
     self.level = 1
@@ -291,10 +292,16 @@ function update(self, dt)
     end
 
     if not self.finished then
-        self.time_left = math.max(0, self.time_left - dt)
-        refresh_hud(self)
-        if self.time_left <= 0 then
-            finish(self)
+        if self.clock_started then
+            self.time_left = math.max(0, self.time_left - dt)
+            refresh_hud(self)
+            if self.time_left <= 0 then
+                finish(self)
+            end
+        elseif self.cards and cards.dealt(self.cards) then
+            -- The opening reveal is free: the clock runs only once the table
+            -- is face down and a card can actually be picked.
+            self.clock_started = true
         end
     end
 
@@ -331,6 +338,7 @@ function on_input(self, action_id, action)
 
     local x, y = layout.to_world(action.x, action.y)
     if cards.skip_peek(self.cards) then
+        self.clock_started = true
         audio.play("tap", { gain = 0.7, speed = 0.95 + math.random() * 0.1 })
         return
     end

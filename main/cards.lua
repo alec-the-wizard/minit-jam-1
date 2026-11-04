@@ -333,6 +333,18 @@ function M.skip_peek(world)
     return skipped
 end
 
+--- Whether the opening reveal is over and the table has settled face down.
+---@param world cards.World
+---@return boolean
+function M.dealt(world)
+    for _, card in ipairs(world.cards) do
+        if card.phase == "peek" or card.phase == "hiding" then
+            return false
+        end
+    end
+    return true
+end
+
 --- Turn every remaining card face up and stop the table (end of round).
 ---@param world cards.World
 function M.reveal_all(world)
