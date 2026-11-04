@@ -6,8 +6,8 @@
 --   * a matching pair is held for a beat and then deleted,
 --   * a mismatch is shown for a moment and then flipped back down.
 --
--- A card's body is the visible 42x60 part of the 64x64 sprite, so that is what
--- the wall and card collision tests use.
+-- A card's body is the whole sprite, so the wall and card collision tests use
+-- the sprite rectangle as-is.
 local field = require("main.field")
 
 local M = {}
@@ -36,7 +36,8 @@ local TAP_SLOP_UNITS = 0.08
 ---@field vy number
 ---@field hw number
 ---@field hh number
----@field base_scale number
+---@field base_w number
+---@field base_h number
 ---@field pop number
 ---@field pop_t number
 ---@field flip number 0 = face down, pi = face up
@@ -88,8 +89,8 @@ local function set_image(card, image)
 end
 
 local function apply_transform(card)
-    local height = card.base_scale * card.pop
-    local width = height * math.max(MIN_FLIP_SCALE, math.abs(math.cos(card.flip)))
+    local height = card.base_h * card.pop
+    local width = card.base_w * card.pop * math.max(MIN_FLIP_SCALE, math.abs(math.cos(card.flip)))
     go.set_position(vmath.vector3(card.x, card.y, 0), card.id)
     go.set_scale(vmath.vector3(width, height, 1), card.id)
 end
@@ -236,7 +237,8 @@ function M.spawn(world, faces)
 
     local m = world.metrics
     local spots = field.pick_cells(m, #entries)
-    local base_scale = m.sprite_size / 64
+    local base_w = m.card_w / m.art_w
+    local base_h = m.card_h / m.art_h
 
     for i, face in ipairs(entries) do
         local spot = spots[i]
@@ -252,7 +254,8 @@ function M.spawn(world, faces)
             vy = 0,
             hw = m.half_w,
             hh = m.half_h,
-            base_scale = base_scale,
+            base_w = base_w,
+            base_h = base_h,
             pop = SPAWN_POP_FROM,
             pop_t = 0,
             flip = math.pi,
@@ -392,7 +395,8 @@ function M.reflow(world, metrics, unit)
         card.y = metrics.bottom + (card.y - old.bottom) * stretch_y
         card.hw = metrics.half_w
         card.hh = metrics.half_h
-        card.base_scale = metrics.sprite_size / 64
+        card.base_w = metrics.card_w / metrics.art_w
+        card.base_h = metrics.card_h / metrics.art_h
         card.vx = card.vx * speed_scale
         card.vy = card.vy * speed_scale
         card.x = math.max(metrics.left + card.hw, math.min(metrics.right - card.hw, card.x))

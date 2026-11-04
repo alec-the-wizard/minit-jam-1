@@ -1,26 +1,24 @@
 --- Where the cards live: the play area for the current viewport.
 --
 -- The Minit slot has no design resolution, so every number here is a multiple
--- of `layout.unit` (the viewport is 18 units tall). The card art is a 64x64
--- square with the actual card drawn 42x60 in the middle, so the playable body
--- is a fraction of the sprite and collisions use that body, not the sprite.
+-- of `layout.unit` (the viewport is 18 units tall). The card art now fills its
+-- whole image, so the sprite rectangle and the playable card body are the same.
 local M = {}
 
-local SPRITE_PX = 64
-local CARD_W_PX = 42
-local CARD_H_PX = 60
+--- Card art pixels, used to scale the sprite down to its on-screen size.
+local ART_W_PX = 139
+local ART_H_PX = 208
 
---- The card artwork inside the 64x64 sprite.
-M.CARD_W_RATIO = CARD_W_PX / SPRITE_PX
-M.CARD_H_RATIO = CARD_H_PX / SPRITE_PX
+--- Card height in layout units, kept at the size the old 64x64 art showed. The
+--- width follows the new art's aspect ratio.
+local CARD_H_UNITS = 2.52
+local CARD_W_UNITS = CARD_H_UNITS * ART_W_PX / ART_H_PX
 
 --- Height of the HUD band at the top of the screen. The top wall sits below it,
 --- so a card can never reach the labels.
 local HUD_UNITS = 2.0
 local SIDE_UNITS = 0.35
 local BOTTOM_UNITS = 0.35
---- Sprite square size; the card body is ~1.76 x 2.52 units.
-local CARD_UNITS = 2.69
 --- Space kept between two card bodies when a table is dealt.
 local GAP_UNITS = 0.41
 --- Share of the spawn cells that may be occupied. Above this the cards spend
@@ -36,7 +34,8 @@ local MAX_PAIRS = 6
 ---@field top number
 ---@field width number
 ---@field height number
----@field sprite_size number world pixels of the 64x64 sprite square
+---@field art_w integer texture pixels of one card image
+---@field art_h integer texture pixels of one card image
 ---@field card_w number world pixels of the visible card
 ---@field card_h number world pixels of the visible card
 ---@field half_w number
@@ -60,9 +59,10 @@ function M.measure(width, height, unit)
     metrics.width = math.max(unit, metrics.right - metrics.left)
     metrics.height = math.max(unit, metrics.top - metrics.bottom)
 
-    metrics.sprite_size = CARD_UNITS * unit
-    metrics.card_w = metrics.sprite_size * M.CARD_W_RATIO
-    metrics.card_h = metrics.sprite_size * M.CARD_H_RATIO
+    metrics.art_w = ART_W_PX
+    metrics.art_h = ART_H_PX
+    metrics.card_w = CARD_W_UNITS * unit
+    metrics.card_h = CARD_H_UNITS * unit
     metrics.half_w = metrics.card_w * 0.5
     metrics.half_h = metrics.card_h * 0.5
 

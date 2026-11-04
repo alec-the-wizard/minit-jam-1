@@ -161,12 +161,6 @@ animations {
   }
 }
 animations {
-  id: "empty"
-  images {
-    image: "/assets/cards/card_empty.png"
-  }
-}
-animations {
   id: "hearts_02"
   images {
     image: "/assets/cards/card_hearts_02.png"
@@ -242,18 +236,6 @@ animations {
   id: "hearts_Q"
   images {
     image: "/assets/cards/card_hearts_Q.png"
-  }
-}
-animations {
-  id: "joker_black"
-  images {
-    image: "/assets/cards/card_joker_black.png"
-  }
-}
-animations {
-  id: "joker_red"
-  images {
-    image: "/assets/cards/card_joker_red.png"
   }
 }
 animations {

@@ -1,7 +1,7 @@
 --- The pool of card faces a table is dealt from.
 --
--- Every animation in /main/uncompressed/cards.atlas is one face; "back" and
--- "empty" are not faces. A table picks unique faces and pairs each of them up.
+-- Every animation in /main/uncompressed/cards.atlas except "back" is one face.
+-- A table picks unique faces and pairs each of them up.
 local M = {}
 
 local FACES = {
@@ -17,7 +17,6 @@ local FACES = {
     "spades_02", "spades_03", "spades_04", "spades_05", "spades_06",
     "spades_07", "spades_08", "spades_09", "spades_10", "spades_A",
     "spades_J", "spades_K", "spades_Q",
-    "joker_black", "joker_red",
 }
 
 ---@return integer
