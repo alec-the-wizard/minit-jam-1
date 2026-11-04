@@ -5,7 +5,7 @@
   "logic": "- Cards are dealt, shown face up, flipped down and then start sliding\n- A pair disappears and scores points; a mismatch flips both cards back\n- Clearing every card deals one more pair, up to what still fits on the table\n- The round ends when the 1 minute timer runs out",
   "resultSorting": "highestScore",
   "license": "proprietary",
-  "credits": "Built with the Defold engine (Defold License 1.0).",
+  "credits": "Card art: Card Asset Pack by natomarcacini (CC0 1.0). Music and sound effects generated for this game. Built with the Defold engine (Defold License 1.0).",
   "config": [
     {
       "key": "round_seconds",

@@ -1,0 +1,25 @@
+THIRD-PARTY NOTICES - Deal With It
+==================================
+
+This file lists third-party assets included in Deal With It. The Minit platform
+notice above covers the Minit SDK and its dependencies; the entries below cover
+the game's own art and audio.
+
+Card artwork
+------------
+Asset:  Card Asset Pack
+Author: natomarcacini
+License: CC0 1.0 Universal (public domain dedication)
+        https://creativecommons.org/publicdomain/zero/1.0/
+
+Used for the playing card faces in assets/cards/. The artwork was cropped and
+rescaled for the card atlas.
+
+Included in this bundle under CC0 1.0. No attribution is required by the
+license; it is given here as a courtesy to the author.
+
+Music and sound effects
+-----------------------
+The background music (assets/music/theme.wav) and the sound effects in
+assets/sfx/ were generated specifically for this game and are original work.
+They are not third-party assets and are covered by the game's own license.
