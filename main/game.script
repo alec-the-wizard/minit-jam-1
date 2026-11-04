@@ -32,12 +32,12 @@ end
 
 local function read_config()
     local config = {
-        round_seconds = number_config("round_seconds", 60, 15, 180),
-        start_pairs = math.floor(number_config("start_pairs", 2, 2, 12)),
-        max_pairs = math.floor(number_config("max_pairs", 8, 3, 12)),
-        card_speed = number_config("card_speed", 2.0, 0.0, 5.0),
-        reveal_seconds = number_config("reveal_seconds", 1.5, 0.4, 5.0),
-        score_per_pair = math.floor(number_config("score_per_pair", 10, 1, 100)),
+        round_seconds = number_config(minit.get_config_value("round_seconds", ""), 60, 15, 180),
+        start_pairs = math.floor(number_config(minit.get_config_value("start_pairs", ""), 2, 2, 12)),
+        max_pairs = math.floor(number_config(minit.get_config_value("max_pairs", ""), 8, 3, 12)),
+        card_speed = number_config(minit.get_config_value("card_speed", ""), 2.0, 0.0, 5.0),
+        reveal_seconds = number_config(minit.get_config_value("reveal_seconds", ""), 1.5, 0.4, 5.0),
+        score_per_pair = math.floor(number_config(minit.get_config_value("score_per_pair", ""), 10, 1, 100)),
     }
     if config.max_pairs < config.start_pairs then
         config.max_pairs = config.start_pairs
