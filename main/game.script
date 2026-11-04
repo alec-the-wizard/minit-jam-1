@@ -20,6 +20,7 @@ local TABLE_PAUSE = 0.55          -- beat between a cleared table and the next
 local BOUNCE_SOUND_GAP = 0.08
 local POP_UNITS = 2.2             -- size of the match flash
 local REPORT_DELAY_MS = 1000      -- let the last table show before the result
+local MUSIC_FADE = 0.8            -- seconds to fade the loop out at the end
 
 local function number_config(key, fallback, low, high)
     local value = tonumber(minit.get_config_value(key, ""))
@@ -171,6 +172,16 @@ local function on_bounce(self)
     audio.play("bounce", { gain = 0.22, speed = 0.9 + math.random() * 0.35 })
 end
 
+-- The browser only wakes its audio context on the first tap, so the loop is
+-- retried every frame until music_start() reports it is really running.
+local function pump_music(self)
+    if not self.music_pending then
+        return
+    end
+    self.music_started = audio.music_start()
+    self.music_pending = not self.music_started
+end
+
 local function start_table(self)
     local wanted = math.min(self.pairs, self.max_pairs)
     self.table_pairs = wanted
@@ -210,6 +221,8 @@ local function finish(self)
     if self.cards then
         cards.reveal_all(self.cards)
     end
+    self.music_pending = false
+    audio.music_stop(MUSIC_FADE)
     audio.play("finish", { gain = 1.0, speed = 0.6 })
     print(("[memory] time up: score %d, %d pairs, %d misses"):format(
         self.score, self.stats.pairs, self.stats.misses))
@@ -250,6 +263,8 @@ function init(self)
     self.hint = ""
     self.level = 1
     self.bounce_sound = 0
+    self.music_started = false
+    self.music_pending = false
     self.finished = false
     self.stats = { pairs = 0, misses = 0, streak = 0, best_streak = 0, tables = 0 }
 
@@ -268,6 +283,8 @@ function update(self, dt)
     if layout.refresh() then
         rebuild(self)
     end
+
+    pump_music(self)
 
     if self.bounce_sound > 0 then
         self.bounce_sound = math.max(0, self.bounce_sound - dt)
@@ -310,6 +327,7 @@ function on_input(self, action_id, action)
     if self.finished or not self.cards then
         return
     end
+    self.music_pending = not self.music_started
 
     local x, y = layout.to_world(action.x, action.y)
     if cards.pick(self.cards, x, y) then

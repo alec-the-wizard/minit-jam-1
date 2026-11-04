@@ -69,3 +69,10 @@ embedded_components {
   data: "sound: \"/assets/sfx/snd_finish.wav\"\n"
   ""
 }
+embedded_components {
+  id: "music"
+  type: "sound"
+  data: "sound: \"/assets/music/theme.wav\"\n"
+  "looping: 1\n"
+  ""
+}
