@@ -330,6 +330,10 @@ function on_input(self, action_id, action)
     self.music_pending = not self.music_started
 
     local x, y = layout.to_world(action.x, action.y)
+    if cards.skip_peek(self.cards) then
+        audio.play("tap", { gain = 0.7, speed = 0.95 + math.random() * 0.1 })
+        return
+    end
     if cards.pick(self.cards, x, y) then
         audio.play("tap", { gain = 0.7, speed = 0.95 + math.random() * 0.1 })
     end

@@ -319,6 +319,20 @@ function M.pick(world, x, y)
     return card
 end
 
+--- Cut the opening reveal short: every card still peeking flips down at once.
+---@param world cards.World
+---@return boolean whether any card was still peeking
+function M.skip_peek(world)
+    local skipped = false
+    for _, card in ipairs(world.cards) do
+        if card.phase == "peek" then
+            card.timer = 0
+            skipped = true
+        end
+    end
+    return skipped
+end
+
 --- Turn every remaining card face up and stop the table (end of round).
 ---@param world cards.World
 function M.reveal_all(world)
