@@ -333,17 +333,25 @@ function M.skip_peek(world)
     return skipped
 end
 
---- The first card the player can flip right now, used to point the tutorial at
---- a live target.
+--- Two hidden cards that make a pair, used to point the tutorial at a sure
+--- match. Returns an empty list when no pair is face down.
 ---@param world cards.World
----@return cards.Card|nil
-function M.first_hidden(world)
+---@return cards.Card[]
+function M.first_pair(world)
+    local hidden = {}
     for _, card in ipairs(world.cards) do
         if card.phase == "hidden" then
-            return card
+            hidden[#hidden + 1] = card
         end
     end
-    return nil
+    for i = 1, #hidden do
+        for j = i + 1, #hidden do
+            if hidden[i].face == hidden[j].face then
+                return { hidden[i], hidden[j] }
+            end
+        end
+    end
+    return {}
 end
 
 --- Whether the opening reveal is over and the table has settled face down.

@@ -26,6 +26,10 @@ local HINT_CHAR_EM = 0.61         -- Vera Mono Bold advance per character
 local RING_Z = -0.2               -- halo sits behind the cards
 local RING_W_SCALE = 2.2          -- halo width, as a share of the card width
 local RING_H_SCALE = 1.9          -- halo height, as a share of the card height
+local HUD_TIME_COLOR = vmath.vector4(1.0, 0.97, 0.85, 1.0)
+local HUD_LOW_COLOR = vmath.vector4(1.0, 0.42, 0.36, 1.0)
+local MEMORIZE_BONUS_TUTORIAL = 2.0  -- reveal multiplier while "Memorize!" is up
+local MEMORIZE_BONUS = 1.25          -- reveal multiplier on every other table
 
 local function number_config(key, fallback, low, high)
     local value = tonumber(minit.get_config_value(key, ""))
@@ -78,6 +82,14 @@ local function set_hint(self, text)
     self.hint = text
     set_label_text(self.hint_id, text)
     go.set_scale(hint_scale(text), self.hint_id)
+end
+
+-- While the tutorial talks, the score and the clock have nothing to say yet,
+-- so their label components stay disabled until the player flips a card.
+local function set_hud_visible(self, visible)
+    local message = visible and "enable" or "disable"
+    msg.post(label_url(self.score_id), message)
+    msg.post(label_url(self.time_id), message)
 end
 
 -- The hint label names the difficulty of the current table instead of the
@@ -139,9 +151,7 @@ local function refresh_hud(self)
 
     if low ~= self.low_time then
         self.low_time = low
-        local color = low and vmath.vector4(1.0, 0.42, 0.36, 1.0)
-            or vmath.vector4(1.0, 0.97, 0.85, 1.0)
-        go.set(label_url(self.time_id), "color", color)
+        go.set(label_url(self.time_id), "color", low and HUD_LOW_COLOR or HUD_TIME_COLOR)
     end
 end
 
@@ -200,7 +210,7 @@ local function pump_music(self)
     self.music_pending = not self.music_started
 end
 
--- First-play tutorial: drop the hint and the halo as soon as the player has
+-- First-play tutorial: drop the hint and the halos as soon as the player has
 -- flipped a card, so the table returns to its normal HUD.
 local function stop_tutorial(self)
     if not self.tutorial then
@@ -208,29 +218,41 @@ local function stop_tutorial(self)
     end
     self.tutorial = false
     self.tutorial_shown = false
-    self.tutorial_card = nil
-    if self.ring_id then
-        go.delete(self.ring_id)
-        self.ring_id = nil
+    self.tutorial_cards = {}
+    for i = 1, #self.rings do
+        go.delete(self.rings[i])
     end
+    self.rings = {}
+    set_hud_visible(self, true)
 end
 
--- Point the halo at a card that can already be flipped. The game script moves
--- it every frame, so it rides along with the sliding table.
-local function show_tutorial_ring(self)
+-- Point the halos at a pair that can already be flipped, so the first match is
+-- a sure thing. The game script moves them every frame, so they ride along
+-- with the sliding table.
+local function show_tutorial_rings(self)
     self.tutorial_shown = true
-    local card = cards.first_hidden(self.cards)
-    if not card then
+    self.tutorial_cards = cards.first_pair(self.cards)
+    if #self.tutorial_cards == 0 then
         return
     end
-    self.tutorial_card = card
     local size = vmath.vector3(
         self.metrics.card_w * RING_W_SCALE,
         self.metrics.card_h * RING_H_SCALE,
         1)
-    self.ring_id = factory.create(msg.url("#ring_factory"),
-        vmath.vector3(card.x, card.y, RING_Z), nil, { size = size })
-    print("[memory] tutorial: halo on the first tappable card")
+    for _, card in ipairs(self.tutorial_cards) do
+        self.rings[#self.rings + 1] = factory.create(msg.url("#ring_factory"),
+            vmath.vector3(card.x, card.y, RING_Z), nil, { size = size })
+    end
+    print("[memory] tutorial: halos on a matching pair")
+end
+
+-- The first table with the tutorial peeks twice as long, so there is time to
+-- read "Memorize!". Every other deal gets a smaller bump.
+local function reveal_time(self)
+    if self.tutorial then
+        return self.config.reveal_seconds * MEMORIZE_BONUS_TUTORIAL
+    end
+    return self.config.reveal_seconds * MEMORIZE_BONUS
 end
 
 local function start_table(self)
@@ -239,12 +261,13 @@ local function start_table(self)
     local speed = math.min(self.config.card_speed * 2.6,
         self.config.card_speed * (1 + 0.09 * (self.level - 1)))
 
+    local reveal = reveal_time(self)
     self.cards = cards.new({
         unit = layout.unit,
         metrics = self.metrics,
         speed = speed,
         factory = self.card_factory,
-        reveal = self.config.reveal_seconds,
+        reveal = reveal,
         on_pair = function(a, b) on_pair(self, a, b) end,
         on_miss = function(a, b) on_miss(self, a, b) end,
         on_bounce = function(x, y) on_bounce(self, x, y) end,
@@ -252,10 +275,12 @@ local function start_table(self)
     cards.spawn(self.cards, deck.pick(wanted))
     if self.tutorial then
         set_hint(self, "Memorize!")
+        set_hud_visible(self, false)
     else
         set_hint(self, difficulty_name(wanted))
     end
-    print(("[memory] table %d: %d pairs, speed %.2f"):format(self.level, wanted, speed))
+    print(("[memory] table %d: %d pairs, speed %.2f, reveal %.2f"):format(
+        self.level, wanted, speed, reveal))
 end
 
 local function clear_table(self)
@@ -325,8 +350,8 @@ function init(self)
     self.finished = false
     self.tutorial = minit.should_show_tutorial()
     self.tutorial_shown = false
-    self.tutorial_card = nil
-    self.ring_id = nil
+    self.tutorial_cards = {}
+    self.rings = {}
     self.stats = { pairs = 0, misses = 0, streak = 0, best_streak = 0, tables = 0 }
 
     layout.refresh()
@@ -370,13 +395,14 @@ function update(self, dt)
         cards.update(self.cards, dt)
     end
 
-    if self.ring_id then
-        go.set_position(vmath.vector3(self.tutorial_card.x, self.tutorial_card.y, RING_Z), self.ring_id)
+    for i = 1, #self.rings do
+        local card = self.tutorial_cards[i]
+        go.set_position(vmath.vector3(card.x, card.y, RING_Z), self.rings[i])
     end
 
     if self.tutorial and not self.tutorial_shown and cards.dealt(self.cards) then
         set_hint(self, "Tap two matching cards")
-        show_tutorial_ring(self)
+        show_tutorial_rings(self)
     end
 
     if self.finished then
