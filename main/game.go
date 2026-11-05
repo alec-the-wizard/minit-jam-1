@@ -84,7 +84,7 @@ embedded_components {
 embedded_components {
   id: "music"
   type: "sound"
-  data: "sound: \"/assets/music/theme.wav\"\n"
+  data: "sound: \"/assets/music/theme.ogg\"\n"
   "looping: 1\n"
   ""
 }
