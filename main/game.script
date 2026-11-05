@@ -28,6 +28,10 @@ local RING_W_SCALE = 2.2          -- halo width, as a share of the card width
 local RING_H_SCALE = 1.9          -- halo height, as a share of the card height
 local HUD_TIME_COLOR = vmath.vector4(1.0, 0.97, 0.85, 1.0)
 local HUD_LOW_COLOR = vmath.vector4(1.0, 0.42, 0.36, 1.0)
+local HUD_BEST_UNITS = 0.44        -- best line, a step smaller than the score
+local HUD_BEST_TOP_UNITS = 0.64    -- how far under the score line it sits
+local BEST_PREFIX = "v1:"          -- user data format, e.g. "v1:563"
+local BEST_FLASH = "NEW BEST!"
 local MEMORIZE_BONUS_TUTORIAL = 2.0  -- reveal multiplier while "Memorize!" is up
 local MEMORIZE_BONUS = 1.25          -- reveal multiplier on every other table
 
@@ -52,6 +56,20 @@ local function read_config()
         config.max_pairs = config.start_pairs
     end
     return config
+end
+
+-- The player's best run, stored as "v1:<score>" in their single user data slot.
+-- A missing slot, an older format or a broken value simply means "no best yet".
+local function read_best()
+    local raw = minit.get_user_data()
+    if not raw then
+        return nil
+    end
+    local score = raw:match("^" .. BEST_PREFIX .. "(%d+)$")
+    if not score then
+        return nil
+    end
+    return tonumber(score)
 end
 
 local function spawn_pop(x, y, size)
@@ -84,12 +102,14 @@ local function set_hint(self, text)
     go.set_scale(hint_scale(text), self.hint_id)
 end
 
--- While the tutorial talks, the score and the clock have nothing to say yet,
--- so their label components stay disabled until the player flips a card.
+-- While the tutorial talks, the score, the clock and the best line have nothing
+-- to say yet, so their label components stay disabled until the player flips a
+-- card.
 local function set_hud_visible(self, visible)
     local message = visible and "enable" or "disable"
     msg.post(label_url(self.score_id), message)
     msg.post(label_url(self.time_id), message)
+    msg.post(label_url(self.best_id), message)
 end
 
 -- The hint label names the difficulty of the current table instead of the
@@ -122,6 +142,10 @@ local function place_scene(self)
     go.set_position(vmath.vector3(margin, centre_y, HUD_Z), self.score_id)
     go.set_scale(scale, self.score_id)
 
+    go.set_position(vmath.vector3(margin, centre_y - HUD_BEST_TOP_UNITS * unit, HUD_Z),
+        self.best_id)
+    go.set_scale(HUD_BEST_UNITS * unit / FONT_SIZE, self.best_id)
+
     go.set_position(vmath.vector3(layout.width - margin, centre_y, HUD_Z), self.time_id)
     go.set_scale(scale, self.time_id)
 
@@ -131,6 +155,18 @@ end
 
 local function format_clock(seconds)
     return ("%d:%02d"):format(math.floor(seconds / 60), seconds % 60)
+end
+
+-- The best line stays empty until there is a stored record or the current run
+-- has already beaten it.
+local function best_text(self)
+    if not self.best then
+        return ""
+    end
+    if self.score > self.best then
+        return BEST_FLASH
+    end
+    return ("BEST %d"):format(self.best)
 end
 
 local function refresh_hud(self)
@@ -147,6 +183,16 @@ local function refresh_hud(self)
     if clock_text ~= self.clock_text then
         self.clock_text = clock_text
         set_label_text(self.time_id, clock_text)
+    end
+
+    if self.best and self.score > self.best and not self.beat_best then
+        self.beat_best = true
+        print(("[memory] new best: %d beats %d"):format(self.score, self.best))
+    end
+    local best = best_text(self)
+    if best ~= self.best_text then
+        self.best_text = best
+        set_label_text(self.best_id, best)
     end
 
     if low ~= self.low_time then
@@ -307,9 +353,11 @@ local function finish(self)
     audio.play("finish", { gain = 1.0, speed = 0.6 })
     print(("[memory] time up: score %d, %d pairs, %d misses"):format(
         self.score, self.stats.pairs, self.stats.misses))
+    local best = math.max(self.score, self.best or 0)
     minit.report_result(self.score, {
         flavor_text = flavour_text(self.stats),
         delay = REPORT_DELAY_MS,
+        user_data = ("%s%d"):format(BEST_PREFIX, best),
     })
 end
 
@@ -334,10 +382,14 @@ function init(self)
     self.config = read_config()
     self.card_factory = msg.url("#card_factory")
     self.score_id = factory.create(msg.url("#score_factory"), vmath.vector3(0, 0, HUD_Z))
+    self.best_id = factory.create(msg.url("#best_factory"), vmath.vector3(0, 0, HUD_Z))
     self.time_id = factory.create(msg.url("#time_factory"), vmath.vector3(0, 0, HUD_Z))
     self.hint_id = factory.create(msg.url("#hint_factory"), vmath.vector3(0, 0, HUD_Z))
     self.score = 0
     self.score_text = ""
+    self.best = read_best()
+    self.best_text = ""
+    self.beat_best = false
     self.time_left = self.config.round_seconds
     self.clock_text = ""
     self.clock_started = false
@@ -360,9 +412,9 @@ function init(self)
     refresh_hud(self)
     start_table(self)
 
-    print(("[memory] start: %.0f s, %d..%d pairs, %d faces, tutorial %s"):format(
+    print(("[memory] start: %.0f s, %d..%d pairs, %d faces, tutorial %s, best %s"):format(
         self.config.round_seconds, self.start_pairs, self.max_pairs, deck.count(),
-        tostring(self.tutorial)))
+        tostring(self.tutorial), self.best and tostring(self.best) or "none"))
     minit.loading_done()
 end
 

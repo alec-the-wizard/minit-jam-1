@@ -34,6 +34,12 @@ embedded_components {
   ""
 }
 embedded_components {
+  id: "best_factory"
+  type: "factory"
+  data: "prototype: \"/main/hud_best.go\"\n"
+  ""
+}
+embedded_components {
   id: "hint_factory"
   type: "factory"
   data: "prototype: \"/main/hud_hint.go\"\n"
