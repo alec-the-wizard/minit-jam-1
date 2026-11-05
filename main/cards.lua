@@ -333,6 +333,19 @@ function M.skip_peek(world)
     return skipped
 end
 
+--- The first card the player can flip right now, used to point the tutorial at
+--- a live target.
+---@param world cards.World
+---@return cards.Card|nil
+function M.first_hidden(world)
+    for _, card in ipairs(world.cards) do
+        if card.phase == "hidden" then
+            return card
+        end
+    end
+    return nil
+end
+
 --- Whether the opening reveal is over and the table has settled face down.
 ---@param world cards.World
 ---@return boolean

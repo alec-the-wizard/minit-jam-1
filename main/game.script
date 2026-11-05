@@ -21,6 +21,11 @@ local BOUNCE_SOUND_GAP = 0.08
 local POP_UNITS = 2.2             -- size of the match flash
 local REPORT_DELAY_MS = 1000      -- let the last table show before the result
 local MUSIC_FADE = 0.8            -- seconds to fade the loop out at the end
+local HINT_MAX_UNITS = 8.4        -- longest hint, as a share of the screen width
+local HINT_CHAR_EM = 0.61         -- Vera Mono Bold advance per character
+local RING_Z = -0.2               -- halo sits behind the cards
+local RING_W_SCALE = 2.2          -- halo width, as a share of the card width
+local RING_H_SCALE = 1.9          -- halo height, as a share of the card height
 
 local function number_config(key, fallback, low, high)
     local value = tonumber(minit.get_config_value(key, ""))
@@ -57,9 +62,22 @@ local function set_label_text(id, text)
     go.set(label_url(id), "text", text)
 end
 
+-- The hint is a single line (the label does not line-break), so a long hint
+-- like the tutorial's shrinks just enough to stay inside a narrow screen.
+local function hint_scale(text)
+    local scale = HUD_FONT_UNITS * layout.unit / FONT_SIZE
+    local width = #text * HINT_CHAR_EM * HUD_FONT_UNITS * layout.unit
+    local room = HINT_MAX_UNITS * layout.unit
+    if width > room then
+        return scale * room / width
+    end
+    return scale
+end
+
 local function set_hint(self, text)
     self.hint = text
     set_label_text(self.hint_id, text)
+    go.set_scale(hint_scale(text), self.hint_id)
 end
 
 -- The hint label names the difficulty of the current table instead of the
@@ -96,7 +114,7 @@ local function place_scene(self)
     go.set_scale(scale, self.time_id)
 
     go.set_position(vmath.vector3(layout.width * 0.5, centre_y, HUD_Z), self.hint_id)
-    go.set_scale(scale, self.hint_id)
+    go.set_scale(hint_scale(self.hint), self.hint_id)
 end
 
 local function format_clock(seconds)
@@ -182,6 +200,39 @@ local function pump_music(self)
     self.music_pending = not self.music_started
 end
 
+-- First-play tutorial: drop the hint and the halo as soon as the player has
+-- flipped a card, so the table returns to its normal HUD.
+local function stop_tutorial(self)
+    if not self.tutorial then
+        return
+    end
+    self.tutorial = false
+    self.tutorial_shown = false
+    self.tutorial_card = nil
+    if self.ring_id then
+        go.delete(self.ring_id)
+        self.ring_id = nil
+    end
+end
+
+-- Point the halo at a card that can already be flipped. The game script moves
+-- it every frame, so it rides along with the sliding table.
+local function show_tutorial_ring(self)
+    self.tutorial_shown = true
+    local card = cards.first_hidden(self.cards)
+    if not card then
+        return
+    end
+    self.tutorial_card = card
+    local size = vmath.vector3(
+        self.metrics.card_w * RING_W_SCALE,
+        self.metrics.card_h * RING_H_SCALE,
+        1)
+    self.ring_id = factory.create(msg.url("#ring_factory"),
+        vmath.vector3(card.x, card.y, RING_Z), nil, { size = size })
+    print("[memory] tutorial: halo on the first tappable card")
+end
+
 local function start_table(self)
     local wanted = math.min(self.pairs, self.max_pairs)
     self.table_pairs = wanted
@@ -199,7 +250,11 @@ local function start_table(self)
         on_bounce = function(x, y) on_bounce(self, x, y) end,
     })
     cards.spawn(self.cards, deck.pick(wanted))
-    set_hint(self, difficulty_name(wanted))
+    if self.tutorial then
+        set_hint(self, "Memorize!")
+    else
+        set_hint(self, difficulty_name(wanted))
+    end
     print(("[memory] table %d: %d pairs, speed %.2f"):format(self.level, wanted, speed))
 end
 
@@ -218,6 +273,7 @@ local function finish(self)
         return
     end
     self.finished = true
+    stop_tutorial(self)
     if self.cards then
         cards.reveal_all(self.cards)
     end
@@ -267,6 +323,10 @@ function init(self)
     self.music_started = false
     self.music_pending = false
     self.finished = false
+    self.tutorial = minit.should_show_tutorial()
+    self.tutorial_shown = false
+    self.tutorial_card = nil
+    self.ring_id = nil
     self.stats = { pairs = 0, misses = 0, streak = 0, best_streak = 0, tables = 0 }
 
     layout.refresh()
@@ -275,8 +335,9 @@ function init(self)
     refresh_hud(self)
     start_table(self)
 
-    print(("[memory] start: %.0f s, %d..%d pairs, %d faces"):format(
-        self.config.round_seconds, self.start_pairs, self.max_pairs, deck.count()))
+    print(("[memory] start: %.0f s, %d..%d pairs, %d faces, tutorial %s"):format(
+        self.config.round_seconds, self.start_pairs, self.max_pairs, deck.count(),
+        tostring(self.tutorial)))
     minit.loading_done()
 end
 
@@ -307,6 +368,15 @@ function update(self, dt)
 
     if self.cards then
         cards.update(self.cards, dt)
+    end
+
+    if self.ring_id then
+        go.set_position(vmath.vector3(self.tutorial_card.x, self.tutorial_card.y, RING_Z), self.ring_id)
+    end
+
+    if self.tutorial and not self.tutorial_shown and cards.dealt(self.cards) then
+        set_hint(self, "Tap two matching cards")
+        show_tutorial_ring(self)
     end
 
     if self.finished then
@@ -344,5 +414,9 @@ function on_input(self, action_id, action)
     end
     if cards.pick(self.cards, x, y) then
         audio.play("tap", { gain = 0.7, speed = 0.95 + math.random() * 0.1 })
+        if self.tutorial then
+            stop_tutorial(self)
+            set_hint(self, difficulty_name(self.table_pairs))
+        end
     end
 end

@@ -1,0 +1,24 @@
+-- Pulsing halo under the card the first-play tutorial points at. Spawned by
+-- main/game.script with a `size` in world pixels; the game script moves it onto
+-- the card every frame, so it keeps up with the sliding table.
+go.property("size", vmath.vector3(160.0, 160.0, 1.0))
+
+local PULSE_SPEED = 3.2         -- radians per second
+local PULSE_SCALE = 0.07        -- share of the size the halo breathes by
+local ALPHA_LOW = 0.40
+local ALPHA_HIGH = 0.95
+
+function init(self)
+    self.time = 0
+    go.set_scale(self.size)
+    go.set("#sprite", "tint", vmath.vector4(1.0, 0.96, 0.72, ALPHA_HIGH))
+end
+
+function update(self, dt)
+    self.time = self.time + dt
+    local wave = 0.5 + 0.5 * math.sin(self.time * PULSE_SPEED)
+    local grow = 1 + PULSE_SCALE * (wave * 2 - 1)
+    local alpha = ALPHA_LOW + (ALPHA_HIGH - ALPHA_LOW) * wave
+    go.set_scale(vmath.vector3(self.size.x * grow, self.size.y * grow, 1))
+    go.set("#sprite", "tint", vmath.vector4(1.0, 0.96, 0.72, alpha))
+end

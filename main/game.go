@@ -52,6 +52,12 @@ embedded_components {
   ""
 }
 embedded_components {
+  id: "ring_factory"
+  type: "factory"
+  data: "prototype: \"/main/hint_ring.go\"\n"
+  ""
+}
+embedded_components {
   id: "snd_tap"
   type: "sound"
   data: "sound: \"/assets/sfx/snd_tap.wav\"\n"
