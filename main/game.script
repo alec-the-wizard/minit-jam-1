@@ -32,6 +32,7 @@ local HUD_BEST_UNITS = 0.44        -- best line, a step smaller than the score
 local HUD_BEST_TOP_UNITS = 0.64    -- how far under the score line it sits
 local BEST_PREFIX = "v1:"          -- user data format, e.g. "v1:563"
 local BEST_FLASH = "NEW BEST!"
+local HINT_PLAY = "Match pairs"    -- how to play, shown between tables
 local MEMORIZE_BONUS_TUTORIAL = 2.0  -- reveal multiplier while "Memorize!" is up
 local MEMORIZE_BONUS = 1.25          -- reveal multiplier on every other table
 
@@ -110,21 +111,6 @@ local function set_hud_visible(self, visible)
     msg.post(label_url(self.score_id), message)
     msg.post(label_url(self.time_id), message)
     msg.post(label_url(self.best_id), message)
-end
-
--- The hint label names the difficulty of the current table instead of the
--- pair count. Anything past four pairs is already "Impossible!".
-local function difficulty_name(pairs)
-    if pairs <= 2 then
-        return "Easy"
-    end
-    if pairs == 3 then
-        return "Medium"
-    end
-    if pairs == 4 then
-        return "Hard"
-    end
-    return "Impossible!"
 end
 
 local function place_scene(self)
@@ -332,7 +318,7 @@ local function start_table(self)
         set_hint(self, "Memorize!")
         set_hud_visible(self, false)
     else
-        set_hint(self, difficulty_name(wanted))
+        set_hint(self, HINT_PLAY)
     end
     print(("[memory] table %d: %d pairs, speed %.2f, reveal %.2f"):format(
         self.level, wanted, speed, reveal))
@@ -463,7 +449,7 @@ function update(self, dt)
     end
 
     if self.tutorial and not self.tutorial_shown and cards.dealt(self.cards) then
-        set_hint(self, "Tap two matching cards")
+        set_hint(self, HINT_PLAY)
         show_tutorial_rings(self)
     end
 
@@ -504,7 +490,7 @@ function on_input(self, action_id, action)
         audio.play("tap", { gain = 0.7, speed = 0.95 + math.random() * 0.1 })
         if self.tutorial then
             stop_tutorial(self)
-            set_hint(self, difficulty_name(self.table_pairs))
+            set_hint(self, HINT_PLAY)
         end
     end
 end
