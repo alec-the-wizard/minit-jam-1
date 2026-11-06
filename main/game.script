@@ -34,6 +34,7 @@ local HUD_BEST_TOP_UNITS = 0.64    -- how far under the score line it sits
 local BEST_PREFIX = "v1:"          -- user data format, e.g. "v1:563"
 local BEST_FLASH = "NEW BEST!"
 local HINT_PLAY = "Match pairs"    -- how to play, shown between tables
+local MAX_DT = 0.25               -- cap the frame step after a long stall or hidden tab
 local MEMORIZE_BONUS_TUTORIAL = 2.0  -- reveal multiplier while "Memorize!" is up
 local MEMORIZE_BONUS = 1.25          -- reveal multiplier on every other table
 
@@ -383,6 +384,11 @@ function init(self)
 
     self.config = read_config()
     self.rng = rng.new(self.config.seed)
+    self.paused = not minit.is_viewable()
+    self.unsubscribe = minit.on_viewable_change(function(viewable)
+        self.paused = not viewable
+        print(("[memory] viewable %s"):format(tostring(viewable)))
+    end)
     self.card_factory = msg.url("#card_factory")
     self.score_id = factory.create(msg.url("#score_factory"), vmath.vector3(0, 0, HUD_Z))
     self.best_id = factory.create(msg.url("#best_factory"), vmath.vector3(0, 0, HUD_Z))
@@ -423,6 +429,11 @@ function init(self)
 end
 
 function update(self, dt)
+    if self.paused then
+        return
+    end
+    dt = math.min(dt, MAX_DT)
+
     if layout.refresh() then
         rebuild(self)
     end
@@ -501,4 +512,8 @@ function on_input(self, action_id, action)
             set_hint(self, HINT_PLAY)
         end
     end
+end
+
+function final(self)
+    self.unsubscribe()
 end
