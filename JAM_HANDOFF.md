@@ -7,9 +7,9 @@ Updated 2026-11-06, after P1-5. Self-contained: read this, then `AGENTS.md`.
 
 > Read `JAM_HANDOFF.md` in the repo root, then start with **P1-6**. Read
 > `AGENTS.md` before editing. The jam Post is already published, so changes ship
-> as updates to that Post — never create a second one. Ask me before changing
-> game rules that are not in the task list. Work task by task, keep the packager
-> green, and show me the diff of each task.
+> by deleting and recreating that Post — never create a second entry. Ask me
+> before changing game rules that are not in the task list. Work task by task,
+> keep the packager green, and show me the diff of each task.
 
 ---
 
@@ -17,7 +17,7 @@ Updated 2026-11-06, after P1-5. Self-contained: read this, then `AGENTS.md`.
 
 The game is an entry in **Defold Game Jam #1** (Minit Games), theme **"One More
 Try"**. The Post is already published; the remaining phase is polish, re-test,
-and ship updates to that same Post.
+and ship the final build by deleting and recreating that Post.
 
 Key dates (from the jam page's Jam Rules dialog):
 
@@ -30,9 +30,10 @@ Key dates (from the jam page's Jam Rules dialog):
 
 **Games cannot be changed once they go live.** Submissions close Nov 11 at
 08:00 GMT-3 and games go live Nov 12, so every change must be uploaded and
-re-tested before the deadline. One entry per person — update the existing Post,
-do not publish a second jam Post. (Confirm the update flow on the dashboard; see
-§11.)
+re-tested before the deadline. The dashboard has **no in-place update**: to
+change a published Post you delete it and recreate it. A jam organizer confirmed
+this is allowed until the final date, and the UI enforces one entry per person
+(so a second Post is not possible). See §5.
 
 Prize structure: **Best Game $400** (judges, from a 10-game shortlist) plus six
 $100 **player-voted** categories: Beautiful, Funny, Brain Burner, High Score
@@ -53,7 +54,8 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 - HUD is label game objects spawned from factories (score, clock, best, hint);
   match pop is `main/pop.go` + `main/pop.script`; tutorial halo is
   `main/hint_ring.go` + `main/hint_ring.script`.
-- Font: **Quicksand Bold** (`assets/fonts/quicksand_bold.ttf`), SIL OFL 1.1.
+- Font: **Quicksand Bold** (`assets/fonts/quicksand_bold.ttf`), SIL OFL 1.1;
+  its notice ships in `THIRD-PARTY-NOTICES.txt`.
 - Audio goes through `minit_platform/audio.lua` (do not edit it). Music is
   `assets/music/theme.ogg` (114 KB, loops), SFX are the WAVs in `assets/sfx/`.
 - Personal best is stored in the single user-data slot as `v1:<score>` and shown
@@ -61,20 +63,22 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 
 ## 3. Current state (verified 2026-11-06)
 
-- The last code commit is `5e8cd53 third party notices removed as not needed`;
-  this handoff update is the only commit after it. Working tree is **clean**.
-- Build passes. Package passes against the code at `5e8cd53`:
-  `dist/Deal With It.zip` is **2.10 MB** (2,202,356 bytes), written
-  2026-11-06 12:52.
+- The commit before this handoff added the Quicksand OFL notice. Working tree is
+  **clean**.
+- Build passes. Package passes after the notice was added:
+  `dist/Deal With It.zip` is **2.10 MB** (2,203,877 bytes), written
+  2026-11-06 14:13.
 - The ZIP contains `meta.json` with `"title": "Deal With It"`. Its
-  `THIRD-PARTY-NOTICES.txt` contains **only the SDK/Defold notices** — there is
-  no custom section any more (see §6).
+  `THIRD-PARTY-NOTICES.txt` contains the SDK/Defold notices **plus the Quicksand
+  Bold OFL 1.1 section** (see §6).
 - `game.project` has `title = Deal With It`; default **linear** texture
   filtering (the two `default_texture_*_filter = nearest` lines are gone).
 - `meta.json` has been updated for the best-score feature, but its
   description/controls/logic are still the **old copy** (P1-7).
 - **The jam Post is published.** The upload title is locked. Store User Data is
-  enabled and the best survived a restart in testing.
+  enabled and the best survived a restart in testing. This is an intentional
+  test build (no gameplay, technical or legal problems); updating it means
+  deleting and recreating the Post (§5).
 - **Tested on a real phone (P0-4)** — loading, first tap, audio, result screen,
   vote screen and `?tutorial=0` behaved. Backgrounding is still the pre-P2-2
   behaviour (the clock keeps running while hidden).
@@ -87,8 +91,8 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 
 - **Never edit `minit_platform/` or `.deps/`.** `minit_platform` is the SDK glue
   that makes the game work inside the Minit app.
-- **Never publish a second jam Post.** Upload the new build and update the
-  existing Post.
+- **Never publish a second jam Post.** Update the entry by deleting the
+  published Post and recreating it (§5); the UI enforces one entry per person.
 - Lua: 4 spaces, `snake_case`, LuaCATS annotations, instance state in `self`,
   local functions only at module scope, `require("module")` with parentheses,
   no metatables/classes.
@@ -121,11 +125,13 @@ Expected tail of the report (current size, 2026-11-06):
 **Shipping an update after the Post is published:**
 
 1. Build + package (above), and confirm the report is green.
-2. On minit.studio, upload the new ZIP to **Deal With It** and update the
-   **existing** Defold Game Jam #1 Post with the new build. Never create a new
-   Post.
-3. Open the Post's preview link (QR → *Generate preview link*, valid 15 minutes)
-   and run the P0-4 checklist on the phone again.
+2. On minit.studio, **delete the current Defold Game Jam #1 Post and recreate
+   it from the new ZIP**, with the same details and caption. There is no
+   in-place update; the organizer confirmed this flow is allowed until the final
+   date. The UI prevents a second entry per person.
+3. Open the recreated Post's preview link (QR → *Generate preview link*, valid
+   15 minutes) and run the P0-4 checklist on the phone again, including the
+   first-result and best-score flow on the fresh Post.
 4. Stop before **Nov 11, 08:00 GMT-3**. After the Nov 12 go-live, the build is
    frozen.
 
@@ -160,11 +166,12 @@ The packager also checks: `report_result` is referenced, the HTML shell is the
 Minit one, the wasm is single-threaded release, ZIP ≤50 MB / ≤2000 files, and
 `meta.json` config ≤25 entries with descriptions ≤100 chars.
 
-**Notices are optional.** `notices()` in `minit_package.lua` appends the root
-`THIRD-PARTY-NOTICES.txt` only if the file exists. The ZIP always keeps the
-SDK/Defold notices; deleting the root file merely drops the custom section. That
-file was removed deliberately (CC0 card art needs no attribution) — see §11 for
-the remaining font-license question.
+**Notices are optional but used.** `notices()` in `minit_package.lua` appends
+the root `THIRD-PARTY-NOTICES.txt` only if the file exists. The ZIP always keeps
+the SDK/Defold notices. The root file now contains **only the Quicksand Bold
+OFL 1.1 notice**: the CC0 card art requires no attribution, but the font's
+license does. Verified in the ZIP: the custom section is present and follows the
+SDK text.
 
 ## 7. How the jam is scored (what to optimise)
 
@@ -203,8 +210,8 @@ Implications:
 | First-play tutorial gated on `should_show_tutorial()` | ✅ P1-4, tested with `?tutorial=0` |
 | Personal best via userData | ✅ P1-5, Store User Data on and tested |
 | Flavor text ≤64 chars | ⚠️ current strings fit, but need the P1-6 rewrite |
-| Licensing/notices | ⚠️ CC0 art resolved; Quicksand OFL notice open (§11) |
-| Jam Post published | ✅ title locked; update this Post only |
+| Licensing/notices | ✅ CC0 art needs no notice; Quicksand OFL 1.1 notice is in `THIRD-PARTY-NOTICES.txt` |
+| Jam Post published | ✅ title locked; updates = delete + recreate |
 
 ## 9. Priority queue
 
@@ -213,7 +220,8 @@ Implications:
 | Task | Outcome |
 |---|---|
 | P0-1 | Title `Deal With It` in `game.project`; linear filtering committed. |
-| P0-2 | Custom notices file removed on purpose (CC0 needs no attribution). |
+| P0-2 | Notices trimmed to what the assets need: CC0 card art needs no attribution. |
+| P0-2b | `THIRD-PARTY-NOTICES.txt` restored with the Quicksand Bold OFL 1.1 text; packaging includes it. |
 | P0-3 | Build + package green; ZIP verified (size now 2.10 MB). |
 | P0-4 | Real-phone test passed: loading, first tap, audio, result, vote, `?tutorial=0`. Backgrounding still runs the clock (P2-2). |
 | P0-5 | Jam Post published on minit.studio; title is locked. |
@@ -244,8 +252,8 @@ Implications:
 - No new `report_result()` path; still exactly one.
 
 **P1-7 — Rewrite `meta.json` for players.**
-- The Post is published on minit.studio, so this only takes effect after
-  re-upload + updating the Post. Do it in the same batch as P1-6.
+- The Post is published on minit.studio, so this only takes effect after the
+  Post is deleted and recreated from a new ZIP. Do it in the same batch as P1-6.
 - Lead with the twist and the name; 2–4 sentences per section; total
   description+controls+logic ≤2500 chars.
 - Remove the hardcoded `10 points`, `1 minute`, and the **wrong** claim that the
@@ -256,18 +264,21 @@ Implications:
 - Acceptance: valid JSON, packaging green, description matches what the game
   actually does in a 60 s Post.
 
-**P1-8 — Card back and table identity (font part is done).**
+**P1-8 — Card back and font sizing (font swap is done).**
 - `assets/cards/card_back.png` is a flat blue rectangle with a diagonal seam
-  (139×208). Give it a pattern/emblem so it reads as the game's identity.
-- Already done: **Quicksand Bold** replaced Vera Mono Bold. Note that the HUD
-  math still uses `FONT_SIZE = 48` and `HINT_CHAR_EM = 0.61` (a Vera Mono
-  advance), while `assets/fonts/game.font` now has `size: 56`. Labels render
-  ~17 % larger than the old tuning and the hint-fit estimate is approximate.
-  Check the score/best spacing and the longest hint on a narrow screen; retune
-  those constants (and `HUD_BEST_UNITS` / `HUD_BEST_TOP_UNITS`) if needed.
+  (139×208). **Confirmed:** it will be redesigned with a pattern/emblem so it
+  reads as the game's identity.
+- **Confirmed:** retune the HUD after the Quicksand swap. Goal: the new font
+  looks about the same size as the old Vera Mono Bold. Current mismatch:
+  `FONT_SIZE = 48` and `HINT_CHAR_EM = 0.61` (a Vera Mono advance) while
+  `assets/fonts/game.font` has `size: 56`. Labels render ~17 % larger than the
+  old tuning and the hint-fit estimate is approximate. You may also change the
+  font size in `game.font` itself; adjust `HUD_FONT_UNITS`, `HUD_BEST_UNITS` and
+  `HUD_BEST_TOP_UNITS` together so the score/best block stays balanced.
+- Check the score/best spacing and the longest hint on a narrow screen.
 - Optional: warmer felt, a vignette.
 - Acceptance: card back still 139×208 (atlas unchanged), readable at ~1.5×; HUD
-  does not overlap or overflow after the font swap.
+  size matches the old look, with no overlap or hint overflow.
 
 ### P2 — if time remains (also long-term value)
 
@@ -330,14 +341,23 @@ both misleading.
 ## 10. Decisions already made
 
 - Name: **Deal With It** — uploaded, title locked on minit.studio.
-- Jam Post: **published**; ship updates to it only, never a second Post.
+- Jam Post: **published**. Updates are delete + recreate (organizer-confirmed,
+  allowed until the final date); the dashboard has no in-place update and the UI
+  prevents a second entry.
+- The current published build is a **deliberate test build** with no gameplay,
+  technical or legal problems.
 - Card art: *Card Asset Pack* by natomarcacini, **CC0** → no attribution file
   required; `license: "proprietary"` stays; credits line kept in `meta.json`.
-- No custom `THIRD-PARTY-NOTICES.txt` in the repo. The ZIP still carries the
-  SDK notices, which are generated by the packager.
+- `THIRD-PARTY-NOTICES.txt` ships with **only the Quicksand Bold OFL 1.1
+  notice**. The CC0 card art needs no attribution; the SDK notices are
+  generated by the packager.
 - Music and SFX: generated for this game → own work.
 - Music format: **OGG** (`theme.ogg`), not WAV.
-- Font: **Quicksand Bold** (`quicksand_bold.ttf`), SIL OFL 1.1.
+- Font: **Quicksand Bold** (`quicksand_bold.ttf`), SIL OFL 1.1. The HUD will
+  be retuned so the new font matches the old visual size; `game.font`'s `size`
+  may change too.
+- Card back: **will be redesigned**.
+- No "enjoyed it? vote below" nudge before the result.
 - Texture filtering: **linear** (the art is anti-aliased; nearest produced
   jaggies at ~1.57×).
 - All **52 card faces** stay in the atlas.
@@ -350,27 +370,17 @@ both misleading.
 
 ## 11. Open decisions (ask the user)
 
-Blocking/legal before the final upload:
-- **Quicksand OFL notice.** The font's name table says *SIL Open Font License
-  1.1* and asks for the copyright/license to travel with the font. The current
-  no-notices decision is fine for the CC0 card pack, but it leaves the font
-  notice out. Cheapest clean fix: restore `THIRD-PARTY-NOTICES.txt` with just
-  the Quicksand copyright + OFL 1.1 text, or confirm an acceptable alternative.
-- Confirm the exact dashboard flow for **updating an already-published Post**
-  with a new build (upload → update Post), and re-test the preview afterwards.
-
 Non-blocking:
-- Retune HUD `FONT_SIZE` / `HINT_CHAR_EM` / label sizes after the font swap
-  (P1-8).
-- Redesign the card back (P1-8).
 - Whether to keep the repo name/folder as is.
-- Whether to add a tasteful "enjoyed it? vote below" nudge before the result
-  (allowed; no incentives).
+- Optional table polish: warmer felt and/or a vignette (P1-8).
 
 ## 12. Reminders / gotchas
 
-- The Post is published: **update it, do not create another** (one entry per
-  person).
+- The Post is published. Updating it means **deleting it and recreating it**
+  with the new build; there is no in-place update. The organizer confirmed this
+  is allowed until the final date, and the UI prevents a second entry.
+- The current published build is a deliberate test build with no known gameplay,
+  technical or legal problems.
 - The upload title is locked to *Deal With It*.
 - Every change must be re-uploaded and re-tested before **Nov 11, 08:00 GMT-3**.
 - The packager validates the **editor's cached** scripts: build before packaging.
@@ -383,6 +393,9 @@ Non-blocking:
   derived from `window.get_size()` via `minit_platform/layout.lua`.
 - Labels are ASCII-only: the font character set has no em dash, curly quotes or
   ellipsis. Use `-`, `'`, `...`.
+- Keep `THIRD-PARTY-NOTICES.txt` in sync with the font. The Quicksand OFL 1.1
+  section is appended to the SDK notices in the ZIP.
+- Re-test the first-result and best-score flow on the recreated Post.
 - Jam rules: no edits after going live, no vote incentives, rights must be
   clean, a moderator reviews the entry.
 - The jam page said "9 submissions" at review time.
@@ -394,7 +407,7 @@ Files:
 `main/field.lua`, `main/deck.lua`, `main/pop.script`, `main/hint_ring.script`,
 `main/uncompressed/cards.atlas`, `assets/fonts/game.font`,
 `assets/fonts/quicksand_bold.ttf`, `assets/music/theme.ogg`,
-`tools/make_music.py`.
+`THIRD-PARTY-NOTICES.txt`, `tools/make_music.py`.
 
 Docs (all under https://minit.studio/docs/):
 `platform-requirements`, `playbook-the-minit-games-format`,
