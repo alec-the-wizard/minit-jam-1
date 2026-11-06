@@ -59,9 +59,10 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
   twice, so two 5s of different suits cannot be confused. The deal is seeded
   (`seed` config), so everyone on a Post gets the same tables.
 - HUD is label game objects spawned from factories (score, clock, best, hint);
-  the hint shows the play reminder "Match pairs" between tables and flashes
-  `+10`/`+12` for 0.6 s on each match; match pop is
-  `main/pop.go` + `main/pop.script`; tutorial halo is
+  the hint shows the play reminder "Match pairs" between tables. A match spawns
+  a floating `+10`/`+12` label over the last tapped card
+  (`main/score_pop.go` + `main/score_pop.script`), which drifts up and fades;
+  match pop is `main/pop.go` + `main/pop.script`; tutorial halo is
   `main/hint_ring.go` + `main/hint_ring.script`.
 - Font: **Quicksand Bold** (`assets/fonts/quicksand_bold.ttf`), SIL OFL 1.1;
   its notice ships in `THIRD-PARTY-NOTICES.txt`.
@@ -75,10 +76,10 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 - The P2 batch is committed: `Deal each table with unique card ranks`,
   `Seed the deal and fix config parsing`, `Pause the round while the game is
   off-screen`, `Show the points at each match`, `Align the config bounds with
-  the table`, `Keep layout reflows off the deal stream`. Working tree is
-  **clean**.
+  the table`, `Keep layout reflows off the deal stream`, and
+  `Float match points over the last tapped card`. Working tree is **clean**.
 - Build passes. Package is green: `dist/Deal With It.zip` is **2.08 MB**
-  (2,184,154 bytes), written 2026-11-06 15:43.
+  (2,183,807 bytes), written 2026-11-06 16:03.
 - The ZIP contains `meta.json` with `"title": "Deal With It"`. Its
   `THIRD-PARTY-NOTICES.txt` contains the SDK/Defold notices **plus the Quicksand
   Bold OFL 1.1 section** (see §6).
@@ -97,8 +98,10 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 - **Pause while hidden** is wired with `minit.on_viewable_change`; verified with
   a fake `window.minit.isViewable` host: the clock froze at 0:41 and resumed
   afterwards. `MAX_DT = 0.25` caps the first frame after a long stall.
-- A match flashes its points in the hint ("+10"); a browser bot made a match and
-  the run ended at score 10 with one `reportResult`.
+- A match spawns a floating `+10` label over the last tapped card; it drifts up
+  and fades over 0.9 s. Every label is its own game object, so two quick matches
+  both stay visible. Verified in the browser with a temporary longer life; no
+  runtime errors.
 - **The jam Post is published.** The upload title is locked. Store User Data is
   enabled and the best survived a restart in testing. This is an intentional
   test build (no gameplay, technical or legal problems); updating it means
@@ -248,7 +251,7 @@ Implications:
 | `meta.json` config keys match literal reads | ✅ |
 | Same challenge per Post (seed) | ✅ P2-1, `?seed=7` twice = same table |
 | Pause when off-screen | ✅ P2-2, browser-tested with a fake viewability host |
-| Match points visible | ✅ P2-3, `+10` flashes in the hint |
+| Match points visible | ✅ P2-3, floating `+10` over the last tapped card |
 | Config values applied and bounded | ✅ P2-4, plus the `number_config` fix |
 | First-play tutorial gated on `should_show_tutorial()` | ✅ P1-4, tested with `?tutorial=0` |
 | Personal best via userData | ✅ P1-5, Store User Data on and tested |
@@ -282,7 +285,7 @@ Implications:
 | Deck | Each table picks distinct ranks, so the same number or letter never appears twice. |
 | P2-1 | Seeded deal on a dedicated `main/rng.lua` stream and a `seed` config (default 1); table 7 reproduced, table 8 differed. Fixed `number_config`, so config values actually apply. |
 | P2-2 | Pause via `minit.on_viewable_change`; `final()` unsubscribes; `MAX_DT` caps the first frame after a stall. |
-| P2-3 | A match flashes its points ("+10") in the hint for 0.6 s, then "Match pairs" returns. |
+| P2-3 | A match spawns a floating `+N` over the last tapped card; it drifts up and fades over 0.9 s. Each label is a separate object, so fast matches stack. |
 | P2-4 | Bounds: start 2–5, max 3–6, speed 0.6–5; `meta.json` matches the code. |
 | P2-5 | Bundle 2.08 MB; card trimming cancelled. |
 
@@ -329,8 +332,9 @@ Implications:
 - Pause: `minit.on_viewable_change` flips `self.paused`; `update()` returns while
   paused and `final()` unsubscribes. `MAX_DT = 0.25` caps the first frame after a
   stall.
-- Scoring feedback: a match flashes `+10`/`+12` in the hint for 0.6 s; a table
-  clear or the ending cancels the flash so "Cleared!"/"Time's up!" win.
+- Scoring feedback: a match spawns `+10`/`+12` over the last tapped card; the
+  label rises and fades over 0.9 s. Labels are independent objects, so two fast
+  matches both show.
 - Config bounds: the marketable values from P2-4 are in both the code clamps and
   `meta.json` (start 2–5, max 3–6, speed 0.6–5). The table can still lower the
   pair count.
@@ -365,9 +369,12 @@ Non-blocking:
 - Deal randomness goes through `main/rng.lua`, not `math.random`; the global
   stream is for cosmetics only. Reflows use a fresh stream from the Post's seed.
   `seed` 0 is mapped to 1, so it is a valid seed.
-- The HUD hint shares its row with the score and clock. It reads `"Match pairs"`
-  (P1-9) and briefly `"+N"` (P2-3); keep any play hint near that length (about 11
+- The HUD hint shares its row with the score and clock. It reads only
+  `"Match pairs"` (P1-9); keep any play hint near that length (about 11
   characters) or it collides with the clock on a 320 px slot.
+- Match points are a separate `main/score_pop.go` label, not the hint. It is
+  scaled like the HUD and sets `points`/`rise` factory properties; it lives for
+  0.9 s and deletes itself.
 - Pause is wired to `minit.on_viewable_change`; the browser Review pane keeps
   background tabs "visible", so test it with a fake host (`window.minit` with
   `isViewable`/`addEventListener`) instead of tab switching.
@@ -392,9 +399,10 @@ Non-blocking:
 Files:
 `game.project`, `meta.json`, `main/game.script`, `main/cards.lua`,
 `main/field.lua`, `main/deck.lua`, `main/rng.lua`, `main/pop.script`,
-`main/hint_ring.script`, `main/uncompressed/cards.atlas`,
-`assets/fonts/game.font`, `assets/fonts/quicksand_bold.ttf`,
-`assets/music/theme.ogg`, `THIRD-PARTY-NOTICES.txt`, `tools/make_music.py`.
+`main/score_pop.go`, `main/score_pop.script`, `main/hint_ring.script`,
+`main/uncompressed/cards.atlas`, `assets/fonts/game.font`,
+`assets/fonts/quicksand_bold.ttf`, `assets/music/theme.ogg`,
+`THIRD-PARTY-NOTICES.txt`, `tools/make_music.py`.
 
 Docs (all under https://minit.studio/docs/):
 `platform-requirements`, `playbook-the-minit-games-format`,
