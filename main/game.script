@@ -323,6 +323,7 @@ local function start_table(self)
         speed = speed,
         factory = self.card_factory,
         rng = self.rng,
+        seed = self.config.seed,
         reveal = reveal,
         on_pair = function(a, b) on_pair(self, a, b) end,
         on_miss = function(a, b) on_miss(self, a, b) end,

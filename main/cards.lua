@@ -53,6 +53,7 @@ local TAP_SLOP_UNITS = 0.08
 ---@field metrics field.Metrics
 ---@field factory url
 ---@field rng rng.Stream deal stream, so a seed deals the same table
+---@field seed integer seeds the re-deal layout, so a resize does not consume the deal stream
 ---@field reveal number seconds a fresh table stays face up
 ---@field cards cards.Card[]
 ---@field picked cards.Card[]
@@ -72,6 +73,7 @@ function M.new(world)
         metrics = world.metrics,
         factory = world.factory,
         rng = world.rng,
+        seed = world.seed,
         reveal = world.reveal,
         cards = {},
         picked = {},
@@ -457,8 +459,11 @@ function M.reflow(world, metrics, unit)
     -- Stretching keeps a moving card where it is, but it squeezes the deal gap
     -- (positions scale with the field, not with the cards), which is why the
     -- first table used to look cramped. A table still on the deal has not moved
-    -- yet, so lay it out again on the new field instead.
-    local spots = dealing(world) and field.pick_cells(metrics, #world.cards, world.rng) or nil
+    -- yet, so lay it out again on the new field instead. A fresh stream from the
+    -- Post's seed means a resize cannot consume the deal stream, so later tables
+    -- stay identical everywhere.
+    local spots = dealing(world) and
+        field.pick_cells(metrics, #world.cards, rng.new(world.seed)) or nil
 
     for i, card in ipairs(world.cards) do
         card.hw = metrics.half_w
