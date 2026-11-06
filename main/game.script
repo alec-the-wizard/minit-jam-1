@@ -460,16 +460,16 @@ function update(self, dt)
         self.bounce_sound = math.max(0, self.bounce_sound - dt)
     end
 
-    if not self.finished then
+    if not self.finished and self.cards and cards.dealt(self.cards) then
+        -- Every reveal is free: the clock runs only once the table is face
+        -- down and a card can actually be picked.
         if self.clock_started then
             self.time_left = math.max(0, self.time_left - dt)
             refresh_hud(self)
             if self.time_left <= 0 then
                 finish(self)
             end
-        elseif self.cards and cards.dealt(self.cards) then
-            -- The opening reveal is free: the clock runs only once the table
-            -- is face down and a card can actually be picked.
+        else
             self.clock_started = true
         end
     end
