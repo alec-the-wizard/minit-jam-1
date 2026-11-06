@@ -1,21 +1,23 @@
 # Deal With It — Jam Handoff
 
-Written 2026-11-04 at the end of a review session. Self-contained: read this, then
-`AGENTS.md`, then start at the first unchecked P0 task.
+Updated 2026-11-06, after P1-5. Self-contained: read this, then `AGENTS.md`.
+**The next task is P1-6.** All of P0 and P1-1…P1-5 are done and tested.
 
 **Starter prompt for the next session:**
 
-> Read `JAM_HANDOFF.md` in the repo root, then continue with the first unchecked
-> task in the priority queue. Read `AGENTS.md` before editing. Ask me before
-> changing game rules that are not in the task list. Work task by task, keep the
-> packager green, and show me the diff of each task.
+> Read `JAM_HANDOFF.md` in the repo root, then start with **P1-6**. Read
+> `AGENTS.md` before editing. The jam Post is already published, so changes ship
+> as updates to that Post — never create a second one. Ask me before changing
+> game rules that are not in the task list. Work task by task, keep the packager
+> green, and show me the diff of each task.
 
 ---
 
 ## 1. Mission
 
 The game is an entry in **Defold Game Jam #1** (Minit Games), theme **"One More
-Try"**. The current phase is: polish, validate, upload, create the jam Post.
+Try"**. The Post is already published; the remaining phase is polish, re-test,
+and ship updates to that same Post.
 
 Key dates (from the jam page's Jam Rules dialog):
 
@@ -26,9 +28,11 @@ Key dates (from the jam page's Jam Rules dialog):
 | Voting closes | Nov 19, 2026, 08:00 GMT-3 |
 | Winners announced | Nov 24, 2026 |
 
-**Games cannot be changed once they go live.** Everything must be final before
-the deadline. One entry per person. The game was started on 2026-10-28 (jam
-opening day), so it is eligible.
+**Games cannot be changed once they go live.** Submissions close Nov 11 at
+08:00 GMT-3 and games go live Nov 12, so every change must be uploaded and
+re-tested before the deadline. One entry per person — update the existing Post,
+do not publish a second jam Post. (Confirm the update flow on the dashboard; see
+§11.)
 
 Prize structure: **Best Game $400** (judges, from a 10-game shortlist) plus six
 $100 **player-voted** categories: Beautiful, Funny, Brain Burner, High Score
@@ -45,33 +49,46 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 
 - Engine: Defold (release wasm-web), Minit SDK v1.17.0, template-based.
 - All gameplay is in `main/game.script`; geometry in `main/field.lua`, card
-  simulation in `main/cards.lua`, face pool in `main/deck.lua`.
-- HUD is three label game objects spawned from factories; pop effect is
-  `main/pop.go` + `main/pop.script`.
-- Audio goes through `minit_platform/audio.lua` (do not edit it).
+  simulation in `main/cards.lua`, face pool in `main/deck.lua` (52 faces kept).
+- HUD is label game objects spawned from factories (score, clock, best, hint);
+  match pop is `main/pop.go` + `main/pop.script`; tutorial halo is
+  `main/hint_ring.go` + `main/hint_ring.script`.
+- Font: **Quicksand Bold** (`assets/fonts/quicksand_bold.ttf`), SIL OFL 1.1.
+- Audio goes through `minit_platform/audio.lua` (do not edit it). Music is
+  `assets/music/theme.ogg` (114 KB, loops), SFX are the WAVs in `assets/sfx/`.
+- Personal best is stored in the single user-data slot as `v1:<score>` and shown
+  in the HUD.
 
-## 3. Current state (verified at handoff)
+## 3. Current state (verified 2026-11-06)
 
-- HEAD = `8226dc4 make meta.json config keys match code` — contains the
-  packaging fix (see §6). Build passes.
-- `dist/Card Rush.zip` exists from that build: **3.69 MB, packaging green**,
-  but it is **stale**: it predates the filter change and the title change.
-- Working tree: `game.project` is **modified and uncommitted**. The two
-  `default_texture_*_filter = nearest` lines were removed, so the game now uses
-  Defold's default `linear` filtering. Commit it.
-- `game.project` still says `title = Card Rush`. The chosen name is **Deal With
-  It** and it must be set before the first upload (the title is applied on the
-  first upload only).
-- No `THIRD-PARTY-NOTICES.txt` in the repo yet.
-- `meta.json` still has the old description, `license: "proprietary"`, and a
-  `credits` line that only mentions Defold.
-- The editor was running with the project open (port in `.internal/editor.port`,
+- The last code commit is `5e8cd53 third party notices removed as not needed`;
+  this handoff update is the only commit after it. Working tree is **clean**.
+- Build passes. Package passes against the code at `5e8cd53`:
+  `dist/Deal With It.zip` is **2.10 MB** (2,202,356 bytes), written
+  2026-11-06 12:52.
+- The ZIP contains `meta.json` with `"title": "Deal With It"`. Its
+  `THIRD-PARTY-NOTICES.txt` contains **only the SDK/Defold notices** — there is
+  no custom section any more (see §6).
+- `game.project` has `title = Deal With It`; default **linear** texture
+  filtering (the two `default_texture_*_filter = nearest` lines are gone).
+- `meta.json` has been updated for the best-score feature, but its
+  description/controls/logic are still the **old copy** (P1-7).
+- **The jam Post is published.** The upload title is locked. Store User Data is
+  enabled and the best survived a restart in testing.
+- **Tested on a real phone (P0-4)** — loading, first tap, audio, result screen,
+  vote screen and `?tutorial=0` behaved. Backgrounding is still the pre-P2-2
+  behaviour (the clock keeps running while hidden).
+- `assets/cards/card_back.png` is still the original flat blue 139×208 back
+  (P1-8).
+- The editor is running with the project open (port in `.internal/editor.port`,
   token in `.internal/editor.token`).
 
 ## 4. Ground rules
 
 - **Never edit `minit_platform/` or `.deps/`.** `minit_platform` is the SDK glue
   that makes the game work inside the Minit app.
+- **Never publish a second jam Post.** Upload the new build and update the
+  existing Post.
 - Lua: 4 spaces, `snake_case`, LuaCATS annotations, instance state in `self`,
   local functions only at module scope, `require("module")` with parentheses,
   no metatables/classes.
@@ -97,12 +114,24 @@ Invoke-RestMethod -Uri "http://127.0.0.1:$port/eval" -Method Post `
   -Headers @{ Authorization = "Bearer $token" } -Body $body
 ```
 
-Expected tail of the report: `Ready to upload: dist/Deal With It.zip (...)`,
+Expected tail of the report (current size, 2026-11-06):
+`Ready to upload: dist/Deal With It.zip (2.10 MB)`,
 `Release build, single-threaded wasm, meta.json included.` and `=> true`.
+
+**Shipping an update after the Post is published:**
+
+1. Build + package (above), and confirm the report is green.
+2. On minit.studio, upload the new ZIP to **Deal With It** and update the
+   **existing** Defold Game Jam #1 Post with the new build. Never create a new
+   Post.
+3. Open the Post's preview link (QR → *Generate preview link*, valid 15 minutes)
+   and run the P0-4 checklist on the phone again.
+4. Stop before **Nov 11, 08:00 GMT-3**. After the Nov 12 go-live, the build is
+   frozen.
 
 **Gotcha:** the packager reads scripts through the editor's resource cache. After
 editing files outside the editor, run **Project > Build first**, otherwise the
-packager validates stale code (this is what hid the fix during the review).
+packager validates stale code (this is what hid a fix during the earlier review).
 
 **Gotcha:** `.internal/editor.port` changes when the editor restarts.
 
@@ -119,7 +148,7 @@ helper, so all six keys failed. Current shape (keep it):
 ```lua
 local config = {
     round_seconds = number_config(minit.get_config_value("round_seconds", ""), 60, 15, 180),
-    start_pairs = math.floor(number_config(minit.get_config_value("start_pairs", ""), 2, 2, 12)),
+    start_pairs = math.floor(number_config(minit.get_config_value("start_pairs", ""), 3, 2, 12)),
     -- ...one literal key per entry
 }
 ```
@@ -130,6 +159,12 @@ matching `meta.json` entry, or packaging fails.
 The packager also checks: `report_result` is referenced, the HTML shell is the
 Minit one, the wasm is single-threaded release, ZIP ≤50 MB / ≤2000 files, and
 `meta.json` config ≤25 entries with descriptions ≤100 chars.
+
+**Notices are optional.** `notices()` in `minit_package.lua` appends the root
+`THIRD-PARTY-NOTICES.txt` only if the file exists. The ZIP always keeps the
+SDK/Defold notices; deleting the root file merely drops the custom section. That
+file was removed deliberately (CC0 card art needs no attribution) — see §11 for
+the remaining font-license question.
 
 ## 7. How the jam is scored (what to optimise)
 
@@ -147,7 +182,7 @@ Implications:
    Twist, High Score Fever, and presentable in Beautiful. Funny is cheap to earn
    with flavor text. Zen Mode is not a fit.
 2. **The ending must leave a clean, positive impression** for 6 seconds — every
-   finish that does not vote hurts the rate.
+   finish that does not vote hurts the rate. This is what P1-6 is for.
 3. Reach matters: share the published Post link (Discord etc.) after Nov 12.
    Asking players to vote is allowed; offering anything in exchange is not, and
    can get the game disabled.
@@ -157,153 +192,89 @@ Implications:
 | Requirement | Status |
 |---|---|
 | ZIP, `index.html` at root, wasm-web release, single-threaded | ✅ verified by packager |
-| Bundle < 5 MB recommended | ✅ 3.69 MB (will shrink with OGG music) |
+| Bundle < 5 MB recommended | ✅ 2.10 MB |
 | Portrait, touch-only, delta time, any aspect ratio | ✅ |
 | No localStorage/fetch/cookies/external assets/navigation | ✅ |
 | `loading_done()` | ✅ |
 | `report_result()` exactly once | ✅ |
-| `meta.json` config keys match literal reads | ✅ fixed |
+| `meta.json` config keys match literal reads | ✅ |
 | Same challenge per Post (seed) | ❌ P2-1 |
 | Pause when off-screen | ❌ P2-2 |
-| First-play tutorial gated on `should_show_tutorial()` | ❌ P1-4 |
-| Personal best via userData | ❌ P1-5 (also needs a console toggle) |
-| Flavor text ≤64 chars | ⚠️ check after rewrite |
-| Licensing/notices for art | ❌ P0-2 |
+| First-play tutorial gated on `should_show_tutorial()` | ✅ P1-4, tested with `?tutorial=0` |
+| Personal best via userData | ✅ P1-5, Store User Data on and tested |
+| Flavor text ≤64 chars | ⚠️ current strings fit, but need the P1-6 rewrite |
+| Licensing/notices | ⚠️ CC0 art resolved; Quicksand OFL notice open (§11) |
+| Jam Post published | ✅ title locked; update this Post only |
 
 ## 9. Priority queue
 
-Do in order. Each task ends with a build + package run when it touches code.
+### Done (do not redo)
 
-### P0 — must happen before upload (blocking)
+| Task | Outcome |
+|---|---|
+| P0-1 | Title `Deal With It` in `game.project`; linear filtering committed. |
+| P0-2 | Custom notices file removed on purpose (CC0 needs no attribution). |
+| P0-3 | Build + package green; ZIP verified (size now 2.10 MB). |
+| P0-4 | Real-phone test passed: loading, first tap, audio, result, vote, `?tutorial=0`. Backgrounding still runs the clock (P2-2). |
+| P0-5 | Jam Post published on minit.studio; title is locked. |
+| P1-1 | First tap skips the opening peek (`cards.skip_peek`). |
+| P1-2 | First table deals 3 pairs. |
+| P1-3 | Clock starts only when the deal is face down. |
+| P1-4 | Gated first-play tutorial: "Memorize!", hint + halos, HUD hidden until the first flip. |
+| P1-5 | Personal best: `v1:<score>` userData, `BEST n` line, `NEW BEST!` flash. Store User Data enabled and tested. |
+| P1-8a | Quicksand Bold font swapped in for the HUD. |
+| P2-5a | Music converted to OGG (1.92 MB → 114 KB; bundle 3.69 → 2.10 MB). |
 
-**P0-1 — Commit the filter change and set the title.**
-- `game.project`: commit the removed filter lines (defaults to linear).
-- Set `title = Deal With It` under `[project]` (≤50 chars). The packager uses
-  it; minit.studio reads it on the **first upload only**.
-- The dist file will be named `dist/Deal With It.zip`.
-- Acceptance: `git status` clean; packaging green with the new title.
+### P1 — remaining (before the freeze)
 
-**P0-2 — Licensing notices and credits.**
-- Card art: *Card Asset Pack* by **natomarcacini**, **CC0 1.0**. Music and SFX
-  were generated for this game (own work).
-- Create `THIRD-PARTY-NOTICES.txt` at the repo **root**. The packager appends it
-  to the Defold/SDK notices and ships it as `THIRD-PARTY-NOTICES.txt`
-  (`minit_package.lua:565-576`). Add the pack name, author, CC0, and the source
-  URL if available.
-- `meta.json`:
-  - keep `"license": "proprietary"` (it covers the game as a whole);
-  - `credits` should read roughly: `Card art: Card Asset Pack by natomarcacini
-    (CC0 1.0). Music and sound effects generated for this game. Built with
-    Defold (Defold License 1.0).`
-  - add `sourceUrl` only if there is a real URL (it must start with http/https).
-- Acceptance: packaging green; ZIP contains the notices; no guessed URLs.
-
-**P0-3 — Rebuild, package, verify the ZIP.**
-- Run the build + package commands (§5). The old `Card Rush.zip` is stale and
-  must be ignored.
-- Confirm `meta.json` inside the ZIP has `"title": "Deal With It"`.
-- Expected size ≈3.7 MB.
-
-**P0-4 — Test on a real phone before the deadline.**
-- Upload the ZIP, open the game's page, QR button → *Generate preview link*
-  (valid 15 minutes), scan with the Minit app.
-- Checklist:
-  - first frame is not half-drawn; `loading_done` works;
-  - the **first tap** produces sound/cards (see P1-1);
-  - audio is audible (the packager cannot check this);
-  - the run ends and the **result screen appears**;
-  - the **vote screen** appears and advances after ~6s;
-  - backgrounding the app behaves acceptably (after P2-2, the clock pauses);
-  - `?tutorial=0` in a web preview hides the tutorial (returning-player path).
-
-**P0-5 — Create the jam Post (deadline: Nov 11, 08:00 GMT-3).**
-- Upload → Game details → Post. In the Post step choose **Defold Game Jam #1**
-  from the drop-down before publishing.
-- The caption is the only thing a player sees before the first move (≤80 chars).
-  Write it as a challenge, e.g. *"The cards don't hold still. How many pairs can
-  you find in a minute?"*
-- One entry. Do not publish a second jam Post.
-
-### P1 — before the freeze (highest score impact)
-
-**P1-1 — Make the first tap do something.**
-- Today every card is in phase `peek` during the reveal and
-  `cards.pick()` only accepts `hidden` (`main/cards.lua:303-310`), so the first
-  tap is ignored (`main/game.script:322-335`).
-- Add `M.skip_peek(world)`: for every card with `phase == "peek"`, set
-  `card.timer = 0`; return true if any card was peeking.
-- In `on_input`, before `cards.pick`: `if cards.skip_peek(self.cards) then ...
-  return end`. The tap should also start the clock (P1-3).
-- Acceptance: tapping during the opening reveal flips the whole table down; the
-  next tap picks a card; no double-pick.
-
-**P1-2 — Start with 3 pairs, not 2.**
-- `meta.json` `start_pairs` default 3 (min 2); `read_config()` fallback 3.
-- Reason: 4 cards on a 25-cell felt looks empty; 6 cards sell the twist at once.
-- Acceptance: first table has 6 cards.
-
-**P1-3 — The clock starts when the deal is face down.**
-- Add `self.clock_started`. Do not decrement `time_left` until the first table
-  is fully face down (or the player skipped the peek with P1-1).
-- Acceptance: the HUD reads 1:00 on the first tappable frame; the reveal is
-  free.
-
-**P1-4 — First-play tutorial, gated.**
-- Capture **once** at init: `self.tutorial = minit.should_show_tutorial()`.
-- When true, on the first table only: hint `"Memorize!"` during the peek, then
-  `"Tap two matching cards"` plus a pulsing glow ring on one hidden card (a
-  small new GO + script is fine; `assets/ui/glow.png` already exists). Remove
-  the hint/ring on the first successful pick.
-- Keep it short; do not block input. No tutorial for returning players.
-- Acceptance: default web preview shows it; `?tutorial=0` does not; app hides
-  it after the first recorded result.
-
-**P1-5 — Personal best.**
-- Console: Game → Edit → tick **Store User Data**, key e.g.
-  `dealwithit-best` (1–64 chars). Without this, reads return nil and writes are
-  silently dropped.
-- Read at init with `minit.get_user_data()`, store a versioned string
-  `v1:<score>`; ignore unparsable values.
-- Write at the end of the run: `report_result(score, { user_data = ("v1:%d"):format(best) })`.
-- Show `BEST 563` in the HUD (a 4th small label under the score, or reuse the
-  hint on table 1) and flash `NEW BEST!` when beaten.
-- Note: the platform only writes a Post's **first** result; replays do not update
-  the slot. Keep an in-session best as well.
-- Acceptance: best survives app restart; a first-time player sees no fake value;
-  the result still reports exactly once.
-
-**P1-6 — Land the ending.**
-- In `finish()`: `set_hint(self, "Time's up!")`; keep the reveal and
-  `delay = 1000`.
-- Rewrite `flavour_text(stats)` into 3–5 outcome-specific lines with personality
-  and a near-miss/challenge hook (≤64 chars, e.g. `"27 pairs. One more try?"`,
-  `"New best: 640 — beat that."`, `"Zero pairs. The cards won."`).
-- Acceptance: ≤64 chars each (the SDK warns), result screen shows ~1s after the
-  last table.
+**P1-6 — Land the ending. (START HERE)**
+- In `finish()`: call `set_hint(self, "Time's up!")` before/alongside the reveal;
+  keep the reveal and `delay = 1000` (`REPORT_DELAY_MS` is already 1000).
+- Rewrite `flavour_text(stats)` into **3–5 outcome-specific lines** with
+  personality and a near-miss/challenge hook (≤64 chars each). Today the five
+  branches are factual but interchangeable. Ideas (ASCII only, see §12):
+  `"27 pairs. One more try?"`, `"New best: 640. Beat that."`,
+  `"Zero pairs. The cards won."`, `"One pair short of a new best."`
+- The best-score branch should fire when the run beat the stored best, and the
+  zero-pairs branch should feel funny rather than scolding. `flavour_text` only
+  receives `stats` today, so pass the score and stored best (or `self`) to make
+  the "new best" line possible.
+- Acceptance: every string ≤64 chars (the SDK warns/truncates), the hint reads
+  "Time's up!" on the final table, and the result screen appears ~1 s later.
+- No new `report_result()` path; still exactly one.
 
 **P1-7 — Rewrite `meta.json` for players.**
-- Lead with the twist and the name; keep 2–4 sentences per section; total
+- The Post is published on minit.studio, so this only takes effect after
+  re-upload + updating the Post. Do it in the same batch as P1-6.
+- Lead with the twist and the name; 2–4 sentences per section; total
   description+controls+logic ≤2500 chars.
 - Remove the hardcoded `10 points`, `1 minute`, and the **wrong** claim that the
-  opening reveal is the only free look — every table is dealt face up.
-- Keep the controls text accurate for touch.
+  opening reveal is the only free look — **every** table is dealt face up.
+- Keep the controls text accurate for touch (tap only, no drag).
+- Mention the best score and that streak bonuses make later matches worth more.
 - Config values stay aligned with code (see P2-4 table).
 - Acceptance: valid JSON, packaging green, description matches what the game
-  actually does in a 60s Post.
+  actually does in a 60 s Post.
 
-**P1-8 — Card back and table identity.**
+**P1-8 — Card back and table identity (font part is done).**
 - `assets/cards/card_back.png` is a flat blue rectangle with a diagonal seam
   (139×208). Give it a pattern/emblem so it reads as the game's identity.
-- Optional: warmer felt, a vignette; a custom OFL font for the HUD (add it to
-  `THIRD-PARTY-NOTICES.txt`).
-- Acceptance: still 139×208 (atlas unchanged), readable at ~1.5× on screen.
+- Already done: **Quicksand Bold** replaced Vera Mono Bold. Note that the HUD
+  math still uses `FONT_SIZE = 48` and `HINT_CHAR_EM = 0.61` (a Vera Mono
+  advance), while `assets/fonts/game.font` now has `size: 56`. Labels render
+  ~17 % larger than the old tuning and the hint-fit estimate is approximate.
+  Check the score/best spacing and the longest hint on a narrow screen; retune
+  those constants (and `HUD_BEST_UNITS` / `HUD_BEST_TOP_UNITS`) if needed.
+- Optional: warmer felt, a vignette.
+- Acceptance: card back still 139×208 (atlas unchanged), readable at ~1.5×; HUD
+  does not overlap or overflow after the font swap.
 
 ### P2 — if time remains (also long-term value)
 
 **P2-1 — Seed: same challenge for every player of a Post.**
 - `meta.json`: add `seed` (number, default 1, min 0, max 999999).
 - `game.script`: `local seed = tonumber(minit.get_config_value("seed", "")) or os.time()`
-  then `math.randomseed(seed)`; delete `math.randomseed(os.time())` at line ~251.
+  then `math.randomseed(seed)`; delete `math.randomseed(os.time())` at line ~380.
 - This makes deals, directions and spawn cells identical for everyone on a Post
   (cosmetics included), and unlocks daily seed Posts later.
 - Test: `?seed=7` twice = same table; `?seed=8` = different.
@@ -324,7 +295,7 @@ Do in order. Each task ends with a build + package run when it touches code.
 - Acceptance: a match gives immediate point feedback; no per-tap spam.
 
 **P2-4 — Align config bounds with what the game can do.**
-Marketable values (also use them in `meta.json` and the code clamps):
+Marketable values (also use them in `meta.json`; the code clamps):
 
 | key | type | default | min | max |
 |---|---|---|---|---|
@@ -339,12 +310,12 @@ Marketable values (also use them in `meta.json` and the code clamps):
 Facts: `field.MAX_PAIRS = 6`, and `field.capacity()` gives **5 pairs on a 2:3
 slot** (the app slot), so declared values above 5–6 never happen. `card_speed`
 is clamped at 0.0 in code today, which would freeze the cards; use 0.6.
+`meta.json` currently advertises `start_pairs` up to 8 and `max_pairs` up to 12 —
+both misleading.
 
 **P2-5 — Shrink the bundle.**
-- `assets/music/theme.wav` is 1.92 MB (22s mono). Export OGG (≈250 KB), point
-  `main/game.go` at it, keep the loop seamless. The bundle should drop to ≈2.5 MB.
-- Optional: trim the deck (52 faces, only ≤6 used per table; the atlas is 8.4 MB
-  uncompressed). Keep at least ~20 faces for variety.
+- Music part is **done**: `theme.ogg` is 114 KB and the bundle is 2.10 MB.
+- Card trimming is **cancelled by decision** — all 52 faces stay.
 
 ### P3 — after the jam
 
@@ -358,12 +329,20 @@ is clamped at 0.0 in code today, which would freeze the cards; use 0.6.
 
 ## 10. Decisions already made
 
-- Name: **Deal With It** (must be in `game.project` before the first upload).
-- Card art: *Card Asset Pack* by natomarcacini, **CC0** → keep `license:
-  "proprietary"`, add notices/credits.
+- Name: **Deal With It** — uploaded, title locked on minit.studio.
+- Jam Post: **published**; ship updates to it only, never a second Post.
+- Card art: *Card Asset Pack* by natomarcacini, **CC0** → no attribution file
+  required; `license: "proprietary"` stays; credits line kept in `meta.json`.
+- No custom `THIRD-PARTY-NOTICES.txt` in the repo. The ZIP still carries the
+  SDK notices, which are generated by the packager.
 - Music and SFX: generated for this game → own work.
+- Music format: **OGG** (`theme.ogg`), not WAV.
+- Font: **Quicksand Bold** (`quicksand_bold.ttf`), SIL OFL 1.1.
 - Texture filtering: **linear** (the art is anti-aliased; nearest produced
   jaggies at ~1.57×).
+- All **52 card faces** stay in the atlas.
+- Personal best: own HUD line under the score; Store User Data enabled and
+  tested.
 - Theme read: memory game + moving cards = "One More Try" and "Clever Twist".
 - Target categories: Brain Burner, Clever Twist, High Score Fever, plus
   Beautiful/Funny as breadth for the Best Game sum.
@@ -371,26 +350,29 @@ is clamped at 0.0 in code today, which would freeze the cards; use 0.6.
 
 ## 11. Open decisions (ask the user)
 
-Blocking before upload:
-- The exact source URL of the CC0 card pack (or confirmation to ship without
-  one).
-- The final jam **caption** (≤80 chars).
-- Confirmation that *Store User Data* was enabled with the chosen key (P1-5).
+Blocking/legal before the final upload:
+- **Quicksand OFL notice.** The font's name table says *SIL Open Font License
+  1.1* and asks for the copyright/license to travel with the font. The current
+  no-notices decision is fine for the CC0 card pack, but it leaves the font
+  notice out. Cheapest clean fix: restore `THIRD-PARTY-NOTICES.txt` with just
+  the Quicksand copyright + OFL 1.1 text, or confirm an acceptable alternative.
+- Confirm the exact dashboard flow for **updating an already-published Post**
+  with a new build (upload → update Post), and re-test the preview afterwards.
 
 Non-blocking:
-- Convert music to OGG (needs an encoder) or keep WAV.
-- Add a custom OFL font for the HUD, or keep Defold's Vera Mono Bold.
-- Keep all 52 card faces or trim the atlas.
-- Whether to show the best score as its own HUD label or reuse the hint.
+- Retune HUD `FONT_SIZE` / `HINT_CHAR_EM` / label sizes after the font swap
+  (P1-8).
+- Redesign the card back (P1-8).
 - Whether to keep the repo name/folder as is.
 - Whether to add a tasteful "enjoyed it? vote below" nudge before the result
   (allowed; no incentives).
 
 ## 12. Reminders / gotchas
 
-- `game.project` is dirty at handoff — commit the filter change.
-- Title is still `Card Rush`; the first upload locks it.
-- `dist/Card Rush.zip` is stale; delete/ignore it after rebuilding.
+- The Post is published: **update it, do not create another** (one entry per
+  person).
+- The upload title is locked to *Deal With It*.
+- Every change must be re-uploaded and re-tested before **Nov 11, 08:00 GMT-3**.
 - The packager validates the **editor's cached** scripts: build before packaging.
 - `report_result` fires exactly once; do not add a second ending path.
 - `flavor_text` is truncated silently at 64 chars.
@@ -399,6 +381,8 @@ Non-blocking:
 - Do not call `report_result` before `loading_done`.
 - The app's game slot is ~2:3, not the 960×1480 design surface; layout is
   derived from `window.get_size()` via `minit_platform/layout.lua`.
+- Labels are ASCII-only: the font character set has no em dash, curly quotes or
+  ellipsis. Use `-`, `'`, `...`.
 - Jam rules: no edits after going live, no vote incentives, rights must be
   clean, a moderator reviews the entry.
 - The jam page said "9 submissions" at review time.
@@ -407,8 +391,10 @@ Non-blocking:
 
 Files:
 `game.project`, `meta.json`, `main/game.script`, `main/cards.lua`,
-`main/field.lua`, `main/deck.lua`, `main/pop.script`, `main/uncompressed/cards.atlas`,
-`assets/fonts/game.font` (Vera Mono Bold DF), `tools/make_music.py`.
+`main/field.lua`, `main/deck.lua`, `main/pop.script`, `main/hint_ring.script`,
+`main/uncompressed/cards.atlas`, `assets/fonts/game.font`,
+`assets/fonts/quicksand_bold.ttf`, `assets/music/theme.ogg`,
+`tools/make_music.py`.
 
 Docs (all under https://minit.studio/docs/):
 `platform-requirements`, `playbook-the-minit-games-format`,
