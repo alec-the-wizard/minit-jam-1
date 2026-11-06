@@ -10,7 +10,7 @@ local field = require("main.field")
 local deck  = require("main.deck")
 local cards = require("main.cards")
 
-local FONT_SIZE = 48
+local FONT_SIZE = 56             -- assets/fonts/game.font size, so labels render at their nominal size
 local HUD_FONT_UNITS = 0.72       -- label size in layout units
 local HUD_TOP_UNITS = 1.0         -- label centre, measured from the top edge
 local HUD_SIDE_UNITS = 0.35
@@ -22,7 +22,7 @@ local POP_UNITS = 2.2             -- size of the match flash
 local REPORT_DELAY_MS = 1000      -- let the last table show before the result
 local MUSIC_FADE = 0.8            -- seconds to fade the loop out at the end
 local HINT_MAX_UNITS = 8.4        -- longest hint, as a share of the screen width
-local HINT_CHAR_EM = 0.61         -- Vera Mono Bold advance per character
+local HINT_CHAR_EM = 0.58         -- Quicksand Bold average advance, with a small margin
 local RING_Z = -0.2               -- halo sits behind the cards
 local RING_W_SCALE = 2.2          -- halo width, as a share of the card width
 local RING_H_SCALE = 1.9          -- halo height, as a share of the card height
@@ -213,7 +213,8 @@ local function flavour_text(self)
     if stats.pairs == 0 then
         return "Zero pairs. The cards won."
     end
-    if self.best and self.best - self.score <= self.config.score_per_pair then
+    if self.best and self.score < self.best
+        and self.best - self.score <= self.config.score_per_pair then
         return "One pair short of a new best."
     end
     if stats.tables >= 2 then
