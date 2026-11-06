@@ -201,20 +201,28 @@ local function refresh_hud(self)
     end
 end
 
-local function flavour_text(stats)
-    if stats.tables >= 2 then
-        return ("%d tables cleared, %d pairs in a row"):format(stats.tables, stats.best_streak)
-    end
-    if stats.best_streak >= 3 then
-        return ("Best streak: %d pairs in a row"):format(stats.best_streak)
+-- The caption under the result. Every line stays under the platform's 64
+-- character cut-off and points at one more try: the stored best, a near miss
+-- or the next table. It reads the whole run because the "new best" line needs
+-- the score and the record from before this run.
+local function flavour_text(self)
+    local stats = self.stats
+    if self.best and self.score > self.best then
+        return ("New best: %d. Beat that."):format(self.score)
     end
     if stats.pairs == 0 then
-        return "No pairs found - the cards were too quick"
+        return "Zero pairs. The cards won."
     end
-    if stats.misses > stats.pairs * 2 then
-        return ("%d pairs, %d misses"):format(stats.pairs, stats.misses)
+    if self.best and self.best - self.score <= self.config.score_per_pair then
+        return "One pair short of a new best."
     end
-    return ("%d pairs found"):format(stats.pairs)
+    if stats.tables >= 2 then
+        return ("%d tables cleared. One more try?"):format(stats.tables)
+    end
+    if stats.best_streak >= 3 then
+        return ("Best streak: %d in a row"):format(stats.best_streak)
+    end
+    return ("%d pairs. One more try?"):format(stats.pairs)
 end
 
 local function on_pair(self, a, b)
@@ -345,6 +353,7 @@ local function finish(self)
     end
     self.finished = true
     stop_tutorial(self)
+    set_hint(self, "Time's up!")
     if self.cards then
         cards.reveal_all(self.cards)
     end
@@ -355,7 +364,7 @@ local function finish(self)
         self.score, self.stats.pairs, self.stats.misses))
     local best = math.max(self.score, self.best or 0)
     minit.report_result(self.score, {
-        flavor_text = flavour_text(self.stats),
+        flavor_text = flavour_text(self),
         delay = REPORT_DELAY_MS,
         user_data = ("%s%d"):format(BEST_PREFIX, best),
     })
