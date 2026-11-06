@@ -1,11 +1,12 @@
 # Deal With It — Jam Handoff
 
-Updated 2026-11-06, after P1-5. Self-contained: read this, then `AGENTS.md`.
-**The next task is P1-6.** All of P0 and P1-1…P1-5 are done and tested.
+Updated 2026-11-06, after P1 (all of it). Self-contained: read this, then
+`AGENTS.md`.
+**The next task is P2-1.** All of P0 and P1 are done and tested.
 
 **Starter prompt for the next session:**
 
-> Read `JAM_HANDOFF.md` in the repo root, then start with **P1-6**. Read
+> Read `JAM_HANDOFF.md` in the repo root, then start with **P2-1**. Read
 > `AGENTS.md` before editing. The jam Post is already published, so changes ship
 > by deleting and recreating that Post — never create a second entry. Ask me
 > before changing game rules that are not in the task list. Work task by task,
@@ -52,7 +53,8 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 - All gameplay is in `main/game.script`; geometry in `main/field.lua`, card
   simulation in `main/cards.lua`, face pool in `main/deck.lua` (52 faces kept).
 - HUD is label game objects spawned from factories (score, clock, best, hint);
-  match pop is `main/pop.go` + `main/pop.script`; tutorial halo is
+  the hint shows the play reminder "Match pairs" between tables; match pop is
+  `main/pop.go` + `main/pop.script`; tutorial halo is
   `main/hint_ring.go` + `main/hint_ring.script`.
 - Font: **Quicksand Bold** (`assets/fonts/quicksand_bold.ttf`), SIL OFL 1.1;
   its notice ships in `THIRD-PARTY-NOTICES.txt`.
@@ -63,27 +65,31 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 
 ## 3. Current state (verified 2026-11-06)
 
-- The commit before this handoff added the Quicksand OFL notice. Working tree is
-  **clean**.
-- Build passes. Package passes after the notice was added:
-  `dist/Deal With It.zip` is **2.10 MB** (2,203,877 bytes), written
-  2026-11-06 14:13.
+- The last commits are P1-6 (`Improve the ending hint and result captions`),
+  P1-7 (`Rewrite the store copy for players`), P1-8 (`Redesign the card back and
+  retune the HUD`) and the hint change (`Show a play hint instead of the table
+  difficulty`). Working tree is **clean**.
+- Build passes. Package is green: `dist/Deal With It.zip` is **2.08 MB**
+  (2,182,477 bytes), written 2026-11-06 15:02.
 - The ZIP contains `meta.json` with `"title": "Deal With It"`. Its
   `THIRD-PARTY-NOTICES.txt` contains the SDK/Defold notices **plus the Quicksand
   Bold OFL 1.1 section** (see §6).
 - `game.project` has `title = Deal With It`; default **linear** texture
   filtering (the two `default_texture_*_filter = nearest` lines are gone).
-- `meta.json` has been updated for the best-score feature, but its
-  description/controls/logic are still the **old copy** (P1-7).
+- `meta.json` description/controls/logic are the **new player copy** (P1-7,
+  1111 chars total) and the config block is unchanged (bounds are P2-4).
 - **The jam Post is published.** The upload title is locked. Store User Data is
   enabled and the best survived a restart in testing. This is an intentional
   test build (no gameplay, technical or legal problems); updating it means
   deleting and recreating the Post (§5).
 - **Tested on a real phone (P0-4)** — loading, first tap, audio, result screen,
   vote screen and `?tutorial=0` behaved. Backgrounding is still the pre-P2-2
-  behaviour (the clock keeps running while hidden).
-- `assets/cards/card_back.png` is still the original flat blue 139×208 back
-  (P1-8).
+  behaviour (the clock keeps running while hidden). The P1 changes are tested
+  in a browser at 400×600 and 320×600/640, not yet on the phone.
+- `assets/cards/card_back.png` is the **new identity back** (P1-8): deep blue,
+  cream pinstripe frame and a fanned pair emblem, still 139×208.
+- HUD is retuned to the Quicksand metrics (P1-8): labels render at the old
+  nominal size, the best line sits under the score without overlap.
 - The editor is running with the project open (port in `.internal/editor.port`,
   token in `.internal/editor.token`).
 
@@ -119,16 +125,17 @@ Invoke-RestMethod -Uri "http://127.0.0.1:$port/eval" -Method Post `
 ```
 
 Expected tail of the report (current size, 2026-11-06):
-`Ready to upload: dist/Deal With It.zip (2.10 MB)`,
+`Ready to upload: dist/Deal With It.zip (2.08 MB)`,
 `Release build, single-threaded wasm, meta.json included.` and `=> true`.
 
 **Shipping an update after the Post is published:**
 
 1. Build + package (above), and confirm the report is green.
 2. On minit.studio, **delete the current Defold Game Jam #1 Post and recreate
-   it from the new ZIP**, with the same details and caption. There is no
-   in-place update; the organizer confirmed this flow is allowed until the final
-   date. The UI prevents a second entry per person.
+   it from the new ZIP**, with the updated details and caption (the new
+   `meta.json` copy). There is no in-place update; the organizer confirmed this
+   flow is allowed until the final date. The UI prevents a second entry per
+   person.
 3. Open the recreated Post's preview link (QR → *Generate preview link*, valid
    15 minutes) and run the P0-4 checklist on the phone again, including the
    first-result and best-score flow on the fresh Post.
@@ -189,7 +196,8 @@ Implications:
    Twist, High Score Fever, and presentable in Beautiful. Funny is cheap to earn
    with flavor text. Zen Mode is not a fit.
 2. **The ending must leave a clean, positive impression** for 6 seconds — every
-   finish that does not vote hurts the rate. This is what P1-6 is for.
+   finish that does not vote hurts the rate. P1-6 did this ("Time's up!", the
+   reveal, and a caption with a best/near-miss hook); keep it intact.
 3. Reach matters: share the published Post link (Discord etc.) after Nov 12.
    Asking players to vote is allowed; offering anything in exchange is not, and
    can get the game disabled.
@@ -199,7 +207,7 @@ Implications:
 | Requirement | Status |
 |---|---|
 | ZIP, `index.html` at root, wasm-web release, single-threaded | ✅ verified by packager |
-| Bundle < 5 MB recommended | ✅ 2.10 MB |
+| Bundle < 5 MB recommended | ✅ 2.08 MB |
 | Portrait, touch-only, delta time, any aspect ratio | ✅ |
 | No localStorage/fetch/cookies/external assets/navigation | ✅ |
 | `loading_done()` | ✅ |
@@ -209,7 +217,7 @@ Implications:
 | Pause when off-screen | ❌ P2-2 |
 | First-play tutorial gated on `should_show_tutorial()` | ✅ P1-4, tested with `?tutorial=0` |
 | Personal best via userData | ✅ P1-5, Store User Data on and tested |
-| Flavor text ≤64 chars | ⚠️ current strings fit, but need the P1-6 rewrite |
+| Flavor text ≤64 chars | ✅ P1-6 rewrite; longest string is 32 chars |
 | Licensing/notices | ✅ CC0 art needs no notice; Quicksand OFL 1.1 notice is in `THIRD-PARTY-NOTICES.txt` |
 | Jam Post published | ✅ title locked; updates = delete + recreate |
 
@@ -222,7 +230,7 @@ Implications:
 | P0-1 | Title `Deal With It` in `game.project`; linear filtering committed. |
 | P0-2 | Notices trimmed to what the assets need: CC0 card art needs no attribution. |
 | P0-2b | `THIRD-PARTY-NOTICES.txt` restored with the Quicksand Bold OFL 1.1 text; packaging includes it. |
-| P0-3 | Build + package green; ZIP verified (size now 2.10 MB). |
+| P0-3 | Build + package green; ZIP verified (2.08 MB now). |
 | P0-4 | Real-phone test passed: loading, first tap, audio, result, vote, `?tutorial=0`. Backgrounding still runs the clock (P2-2). |
 | P0-5 | Jam Post published on minit.studio; title is locked. |
 | P1-1 | First tap skips the opening peek (`cards.skip_peek`). |
@@ -230,62 +238,20 @@ Implications:
 | P1-3 | Clock starts only when the deal is face down. |
 | P1-4 | Gated first-play tutorial: "Memorize!", hint + halos, HUD hidden until the first flip. |
 | P1-5 | Personal best: `v1:<score>` userData, `BEST n` line, `NEW BEST!` flash. Store User Data enabled and tested. |
+| P1-6 | Ending: `Time's up!` hint, reveal and 1 s delay kept; 5 outcome-specific captions (new best, zero pairs, near miss, tables, streak), all ≤32 chars. One `report_result` path. |
+| P1-7 | `meta.json` rewritten for players: 3 sentences per section, 1111 chars total, no hardcoded points/minutes, every table dealt face up, tap-only controls, best and streak described. |
 | P1-8a | Quicksand Bold font swapped in for the HUD. |
+| P1-8 | Card back redesigned (139×208); HUD divisor fixed to `game.font` size 56; hint advance 0.58. Felt left as is (it already has a vignette). |
+| P1-9 | HUD hint shows the play reminder "Match pairs" instead of the table difficulty; `difficulty_name` removed. |
 | P2-5a | Music converted to OGG (1.92 MB → 114 KB; bundle 3.69 → 2.10 MB). |
-
-### P1 — remaining (before the freeze)
-
-**P1-6 — Land the ending. (START HERE)**
-- In `finish()`: call `set_hint(self, "Time's up!")` before/alongside the reveal;
-  keep the reveal and `delay = 1000` (`REPORT_DELAY_MS` is already 1000).
-- Rewrite `flavour_text(stats)` into **3–5 outcome-specific lines** with
-  personality and a near-miss/challenge hook (≤64 chars each). Today the five
-  branches are factual but interchangeable. Ideas (ASCII only, see §12):
-  `"27 pairs. One more try?"`, `"New best: 640. Beat that."`,
-  `"Zero pairs. The cards won."`, `"One pair short of a new best."`
-- The best-score branch should fire when the run beat the stored best, and the
-  zero-pairs branch should feel funny rather than scolding. `flavour_text` only
-  receives `stats` today, so pass the score and stored best (or `self`) to make
-  the "new best" line possible.
-- Acceptance: every string ≤64 chars (the SDK warns/truncates), the hint reads
-  "Time's up!" on the final table, and the result screen appears ~1 s later.
-- No new `report_result()` path; still exactly one.
-
-**P1-7 — Rewrite `meta.json` for players.**
-- The Post is published on minit.studio, so this only takes effect after the
-  Post is deleted and recreated from a new ZIP. Do it in the same batch as P1-6.
-- Lead with the twist and the name; 2–4 sentences per section; total
-  description+controls+logic ≤2500 chars.
-- Remove the hardcoded `10 points`, `1 minute`, and the **wrong** claim that the
-  opening reveal is the only free look — **every** table is dealt face up.
-- Keep the controls text accurate for touch (tap only, no drag).
-- Mention the best score and that streak bonuses make later matches worth more.
-- Config values stay aligned with code (see P2-4 table).
-- Acceptance: valid JSON, packaging green, description matches what the game
-  actually does in a 60 s Post.
-
-**P1-8 — Card back and font sizing (font swap is done).**
-- `assets/cards/card_back.png` is a flat blue rectangle with a diagonal seam
-  (139×208). **Confirmed:** it will be redesigned with a pattern/emblem so it
-  reads as the game's identity.
-- **Confirmed:** retune the HUD after the Quicksand swap. Goal: the new font
-  looks about the same size as the old Vera Mono Bold. Current mismatch:
-  `FONT_SIZE = 48` and `HINT_CHAR_EM = 0.61` (a Vera Mono advance) while
-  `assets/fonts/game.font` has `size: 56`. Labels render ~17 % larger than the
-  old tuning and the hint-fit estimate is approximate. You may also change the
-  font size in `game.font` itself; adjust `HUD_FONT_UNITS`, `HUD_BEST_UNITS` and
-  `HUD_BEST_TOP_UNITS` together so the score/best block stays balanced.
-- Check the score/best spacing and the longest hint on a narrow screen.
-- Optional: warmer felt, a vignette.
-- Acceptance: card back still 139×208 (atlas unchanged), readable at ~1.5×; HUD
-  size matches the old look, with no overlap or hint overflow.
 
 ### P2 — if time remains (also long-term value)
 
 **P2-1 — Seed: same challenge for every player of a Post.**
 - `meta.json`: add `seed` (number, default 1, min 0, max 999999).
 - `game.script`: `local seed = tonumber(minit.get_config_value("seed", "")) or os.time()`
-  then `math.randomseed(seed)`; delete `math.randomseed(os.time())` at line ~380.
+  then `math.randomseed(seed)`; replace the `math.randomseed(os.time())` call in
+  `init()`.
 - This makes deals, directions and spawn cells identical for everyone on a Post
   (cosmetics included), and unlocks daily seed Posts later.
 - Test: `?seed=7` twice = same table; `?seed=8` = different.
@@ -325,7 +291,7 @@ is clamped at 0.0 in code today, which would freeze the cards; use 0.6.
 both misleading.
 
 **P2-5 — Shrink the bundle.**
-- Music part is **done**: `theme.ogg` is 114 KB and the bundle is 2.10 MB.
+- Music part is **done**: `theme.ogg` is 114 KB and the bundle is 2.08 MB.
 - Card trimming is **cancelled by decision** — all 52 faces stay.
 
 ### P3 — after the jam
@@ -346,17 +312,22 @@ both misleading.
   prevents a second entry.
 - The current published build is a **deliberate test build** with no gameplay,
   technical or legal problems.
-- Card art: *Card Asset Pack* by natomarcacini, **CC0** → no attribution file
+- Card faces: *Card Asset Pack* by natomarcacini, **CC0** → no attribution file
   required; `license: "proprietary"` stays; credits line kept in `meta.json`.
 - `THIRD-PARTY-NOTICES.txt` ships with **only the Quicksand Bold OFL 1.1
   notice**. The CC0 card art needs no attribution; the SDK notices are
   generated by the packager.
 - Music and SFX: generated for this game → own work.
 - Music format: **OGG** (`theme.ogg`), not WAV.
-- Font: **Quicksand Bold** (`quicksand_bold.ttf`), SIL OFL 1.1. The HUD will
-  be retuned so the new font matches the old visual size; `game.font`'s `size`
-  may change too.
-- Card back: **will be redesigned**.
+- Font: **Quicksand Bold** (`quicksand_bold.ttf`), SIL OFL 1.1. `game.font` stays
+  at `size: 56`; `FONT_SIZE` is 56 too, so labels render at the old Vera Mono em
+  size with no per-label fudge. `HINT_CHAR_EM` is 0.58 (Quicksand's proportional
+  advance plus a margin).
+- Card back: **redesigned** (P1-8). Deep blue panel with a cream double pinstripe
+  frame and a fanned pair emblem, plus a thin white card edge so it matches the
+  faces. Still 139×208 with transparent rounded corners.
+- Felt: **left as is**. The shipped texture already has a soft vignette; warmer
+  felt was declined to avoid changing the established look.
 - No "enjoyed it? vote below" nudge before the result.
 - Texture filtering: **linear** (the art is anti-aliased; nearest produced
   jaggies at ~1.57×).
@@ -372,7 +343,6 @@ both misleading.
 
 Non-blocking:
 - Whether to keep the repo name/folder as is.
-- Optional table polish: warmer felt and/or a vignette (P1-8).
 
 ## 12. Reminders / gotchas
 
@@ -386,6 +356,9 @@ Non-blocking:
 - The packager validates the **editor's cached** scripts: build before packaging.
 - `report_result` fires exactly once; do not add a second ending path.
 - `flavor_text` is truncated silently at 64 chars.
+- The HUD hint shares its row with the score and clock. It now reads
+  `"Match pairs"` (P1-9); keep any play hint near that length (about 11
+  characters) or it collides with the clock on a 320 px slot.
 - userData writes are ignored on a Post's replays (first result only) and on
   oversized values (>1024 bytes).
 - Do not call `report_result` before `loading_done`.
