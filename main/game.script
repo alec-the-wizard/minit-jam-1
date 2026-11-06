@@ -313,15 +313,16 @@ local function start_table(self)
         on_miss = function(a, b) on_miss(self, a, b) end,
         on_bounce = function(x, y) on_bounce(self, x, y) end,
     })
-    cards.spawn(self.cards, deck.pick(wanted))
+    local faces = deck.pick(wanted)
+    cards.spawn(self.cards, faces)
     if self.tutorial then
         set_hint(self, "Memorize!")
         set_hud_visible(self, false)
     else
         set_hint(self, HINT_PLAY)
     end
-    print(("[memory] table %d: %d pairs, speed %.2f, reveal %.2f"):format(
-        self.level, wanted, speed, reveal))
+    print(("[memory] table %d: %d pairs [%s], speed %.2f, reveal %.2f"):format(
+        self.level, wanted, table.concat(faces, " "), speed, reveal))
 end
 
 local function clear_table(self)
