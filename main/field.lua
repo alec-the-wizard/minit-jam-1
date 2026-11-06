@@ -5,6 +5,8 @@
 -- whole image, so the sprite rectangle and the playable card body are the same.
 local M = {}
 
+local rng = require("main.rng")
+
 --- Card art pixels, used to scale the sprite down to its on-screen size.
 local ART_W_PX = 139
 local ART_H_PX = 208
@@ -86,8 +88,9 @@ end
 --- Distinct, non-overlapping spawn positions, in random order.
 ---@param metrics field.Metrics
 ---@param count integer
+---@param stream rng.Stream
 ---@return { x: number, y: number }[]
-function M.pick_cells(metrics, count)
+function M.pick_cells(metrics, count, stream)
     local total = metrics.cells
     local wanted = math.min(count, total)
     local indices = {}
@@ -95,7 +98,7 @@ function M.pick_cells(metrics, count)
         indices[i] = i
     end
     for i = 1, wanted do
-        local j = math.random(i, total)
+        local j = i + rng.int(stream, total - i + 1) - 1
         indices[i], indices[j] = indices[j], indices[i]
     end
 

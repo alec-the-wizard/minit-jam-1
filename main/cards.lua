@@ -9,6 +9,7 @@
 -- A card's body is the whole sprite, so the wall and card collision tests use
 -- the sprite rectangle as-is.
 local field = require("main.field")
+local rng = require("main.rng")
 
 local M = {}
 
@@ -51,6 +52,7 @@ local TAP_SLOP_UNITS = 0.08
 ---@field speed number units per second along each axis
 ---@field metrics field.Metrics
 ---@field factory url
+---@field rng rng.Stream deal stream, so a seed deals the same table
 ---@field reveal number seconds a fresh table stays face up
 ---@field cards cards.Card[]
 ---@field picked cards.Card[]
@@ -69,6 +71,7 @@ function M.new(world)
         speed = world.speed,
         metrics = world.metrics,
         factory = world.factory,
+        rng = world.rng,
         reveal = world.reveal,
         cards = {},
         picked = {},
@@ -97,8 +100,8 @@ end
 
 local function start_moving(world, card)
     local speed = world.speed * world.unit
-    card.vx = (math.random(2) == 1 and 1 or -1) * speed
-    card.vy = (math.random(2) == 1 and 1 or -1) * speed
+    card.vx = (rng.int(world.rng, 2) == 1 and 1 or -1) * speed
+    card.vy = (rng.int(world.rng, 2) == 1 and 1 or -1) * speed
     card.moving = true
 end
 
@@ -231,12 +234,12 @@ function M.spawn(world, faces)
         entries[#entries + 1] = face
     end
     for i = #entries, 2, -1 do
-        local j = math.random(i)
+        local j = rng.int(world.rng, i)
         entries[i], entries[j] = entries[j], entries[i]
     end
 
     local m = world.metrics
-    local spots = field.pick_cells(m, #entries)
+    local spots = field.pick_cells(m, #entries, world.rng)
     local base_w = m.card_w / m.art_w
     local base_h = m.card_h / m.art_h
 
@@ -261,7 +264,7 @@ function M.spawn(world, faces)
             flip = math.pi,
             flip_target = math.pi,
             phase = "peek",
-            timer = world.reveal + math.random() * PEEK_STAGGER,
+            timer = world.reveal + rng.unit(world.rng) * PEEK_STAGGER,
             moving = false,
         }
         set_image(card, face)
@@ -455,7 +458,7 @@ function M.reflow(world, metrics, unit)
     -- (positions scale with the field, not with the cards), which is why the
     -- first table used to look cramped. A table still on the deal has not moved
     -- yet, so lay it out again on the new field instead.
-    local spots = dealing(world) and field.pick_cells(metrics, #world.cards) or nil
+    local spots = dealing(world) and field.pick_cells(metrics, #world.cards, world.rng) or nil
 
     for i, card in ipairs(world.cards) do
         card.hw = metrics.half_w

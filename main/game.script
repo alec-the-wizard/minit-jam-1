@@ -9,6 +9,7 @@ local audio  = require("minit_platform.audio")
 local field = require("main.field")
 local deck  = require("main.deck")
 local cards = require("main.cards")
+local rng   = require("main.rng")
 
 local FONT_SIZE = 56             -- assets/fonts/game.font size, so labels render at their nominal size
 local HUD_FONT_UNITS = 0.72       -- label size in layout units
@@ -36,8 +37,10 @@ local HINT_PLAY = "Match pairs"    -- how to play, shown between tables
 local MEMORIZE_BONUS_TUTORIAL = 2.0  -- reveal multiplier while "Memorize!" is up
 local MEMORIZE_BONUS = 1.25          -- reveal multiplier on every other table
 
-local function number_config(key, fallback, low, high)
-    local value = tonumber(minit.get_config_value(key, ""))
+-- The packager greps for a literal get_config_value("key", "") per entry, so
+-- read_config passes the raw string here; this helper only parses and clamps it.
+local function number_config(raw, fallback, low, high)
+    local value = tonumber(raw)
     if not value then
         return fallback
     end
@@ -52,6 +55,7 @@ local function read_config()
         card_speed = number_config(minit.get_config_value("card_speed", ""), 2.0, 0.0, 5.0),
         reveal_seconds = number_config(minit.get_config_value("reveal_seconds", ""), 1.5, 0.4, 5.0),
         score_per_pair = math.floor(number_config(minit.get_config_value("score_per_pair", ""), 10, 1, 100)),
+        seed = math.floor(number_config(minit.get_config_value("seed", ""), 1, 0, 999999)),
     }
     if config.max_pairs < config.start_pairs then
         config.max_pairs = config.start_pairs
@@ -308,12 +312,13 @@ local function start_table(self)
         metrics = self.metrics,
         speed = speed,
         factory = self.card_factory,
+        rng = self.rng,
         reveal = reveal,
         on_pair = function(a, b) on_pair(self, a, b) end,
         on_miss = function(a, b) on_miss(self, a, b) end,
         on_bounce = function(x, y) on_bounce(self, x, y) end,
     })
-    local faces = deck.pick(wanted)
+    local faces = deck.pick(wanted, self.rng)
     cards.spawn(self.cards, faces)
     if self.tutorial then
         set_hint(self, "Memorize!")
@@ -377,6 +382,7 @@ function init(self)
     math.randomseed(os.time())
 
     self.config = read_config()
+    self.rng = rng.new(self.config.seed)
     self.card_factory = msg.url("#card_factory")
     self.score_id = factory.create(msg.url("#score_factory"), vmath.vector3(0, 0, HUD_Z))
     self.best_id = factory.create(msg.url("#best_factory"), vmath.vector3(0, 0, HUD_Z))
@@ -409,9 +415,10 @@ function init(self)
     refresh_hud(self)
     start_table(self)
 
-    print(("[memory] start: %.0f s, %d..%d pairs, %d faces, tutorial %s, best %s"):format(
+    print(("[memory] start: %.0f s, %d..%d pairs, %d faces, tutorial %s, best %s, seed %d"):format(
         self.config.round_seconds, self.start_pairs, self.max_pairs, deck.count(),
-        tostring(self.tutorial), self.best and tostring(self.best) or "none"))
+        tostring(self.tutorial), self.best and tostring(self.best) or "none",
+        self.config.seed))
     minit.loading_done()
 end
 

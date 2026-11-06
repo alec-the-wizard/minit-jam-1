@@ -54,6 +54,14 @@
       "min": 1,
       "max": 100,
       "description": "Points for a matched pair (and the table bonus per pair)."
+    },
+    {
+      "key": "seed",
+      "valueType": "number",
+      "value": 1,
+      "min": 0,
+      "max": 999999,
+      "description": "Deal seed. The same seed deals the same tables."
     }
   ]
 }
