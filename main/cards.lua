@@ -427,6 +427,19 @@ function M.update(world, dt)
     end
 end
 
+--- Whether every card is still on the deal, i.e. sitting on its spawn cell
+--- while it is face up or turning over.
+---@param world cards.World
+---@return boolean
+local function dealing(world)
+    for _, card in ipairs(world.cards) do
+        if card.phase ~= "peek" and card.phase ~= "hiding" then
+            return false
+        end
+    end
+    return true
+end
+
 --- Move the cards onto a new viewport without disturbing the round.
 ---@param world cards.World
 ---@param metrics field.Metrics
@@ -436,18 +449,30 @@ function M.reflow(world, metrics, unit)
     local stretch_x = metrics.width / math.max(1, old.width)
     local stretch_y = metrics.height / math.max(1, old.height)
     local speed_scale = unit / world.unit
+    -- The engine often reports its default window at init and the real slot a
+    -- frame later, so the first table is reflowed before it is ever seen.
+    -- Stretching keeps a moving card where it is, but it squeezes the deal gap
+    -- (positions scale with the field, not with the cards), which is why the
+    -- first table used to look cramped. A table still on the deal has not moved
+    -- yet, so lay it out again on the new field instead.
+    local spots = dealing(world) and field.pick_cells(metrics, #world.cards) or nil
 
-    for _, card in ipairs(world.cards) do
-        card.x = metrics.left + (card.x - old.left) * stretch_x
-        card.y = metrics.bottom + (card.y - old.bottom) * stretch_y
+    for i, card in ipairs(world.cards) do
         card.hw = metrics.half_w
         card.hh = metrics.half_h
         card.base_w = metrics.card_w / metrics.art_w
         card.base_h = metrics.card_h / metrics.art_h
         card.vx = card.vx * speed_scale
         card.vy = card.vy * speed_scale
-        card.x = math.max(metrics.left + card.hw, math.min(metrics.right - card.hw, card.x))
-        card.y = math.max(metrics.bottom + card.hh, math.min(metrics.top - card.hh, card.y))
+        if spots then
+            card.x = spots[i].x
+            card.y = spots[i].y
+        else
+            card.x = metrics.left + (card.x - old.left) * stretch_x
+            card.y = metrics.bottom + (card.y - old.bottom) * stretch_y
+            card.x = math.max(metrics.left + card.hw, math.min(metrics.right - card.hw, card.x))
+            card.y = math.max(metrics.bottom + card.hh, math.min(metrics.top - card.hh, card.y))
+        end
         apply_transform(card)
     end
 
