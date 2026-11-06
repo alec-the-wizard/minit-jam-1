@@ -20,15 +20,15 @@
       "valueType": "number",
       "value": 3,
       "min": 2,
-      "max": 8,
+      "max": 5,
       "description": "Pairs on the first table."
     },
     {
       "key": "max_pairs",
       "valueType": "number",
-      "value": 8,
+      "value": 5,
       "min": 3,
-      "max": 12,
+      "max": 6,
       "description": "Upper limit of pairs; the table size can lower it."
     },
     {
