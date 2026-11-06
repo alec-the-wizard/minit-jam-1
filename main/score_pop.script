@@ -25,7 +25,6 @@ function update(self, dt)
         alpha = 1 - (p - HOLD) / (1 - HOLD)
     end
     go.set_position(vmath.vector3(self.x, self.y + self.rise * eased, self.z))
-    go.set("#label", "color", vmath.vector4(1.0, 0.95, 0.78, alpha))
     if p >= 1 then
         go.delete()
     end

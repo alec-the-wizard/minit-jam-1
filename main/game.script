@@ -12,7 +12,7 @@ local cards = require("main.cards")
 local rng   = require("main.rng")
 
 local FONT_SIZE = 56             -- assets/fonts/game.font size, so labels render at their nominal size
-local HUD_FONT_UNITS = 0.72       -- label size in layout units
+local HUD_FONT_UNITS = 0.82       -- label size in layout units
 local HUD_TOP_UNITS = 1.0         -- label centre, measured from the top edge
 local HUD_SIDE_UNITS = 0.35
 local HUD_Z = 0.5
