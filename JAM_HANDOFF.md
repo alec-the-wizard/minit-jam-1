@@ -1,16 +1,18 @@
 # Deal With It — Jam Handoff
 
-Updated 2026-11-06, after P1 (all of it). Self-contained: read this, then
+Updated 2026-11-06, after P2 (all of it). Self-contained: read this, then
 `AGENTS.md`.
-**The next task is P2-1.** All of P0 and P1 are done and tested.
+**The next step is the final phone test and the Post update.** All P0, P1 and P2
+are done and tested.
 
 **Starter prompt for the next session:**
 
-> Read `JAM_HANDOFF.md` in the repo root, then start with **P2-1**. Read
-> `AGENTS.md` before editing. The jam Post is already published, so changes ship
-> by deleting and recreating that Post — never create a second entry. Ask me
-> before changing game rules that are not in the task list. Work task by task,
-> keep the packager green, and show me the diff of each task.
+> Read `JAM_HANDOFF.md` in the repo root, then run the **final phone test and
+> Post update** (§5). Read `AGENTS.md` before editing. The jam Post is already
+> published, so changes ship by deleting and recreating that Post — never create
+> a second entry. Ask me before changing game rules that are not in the task
+> list. Work task by task, keep the packager green, and show me the diff of each
+> task.
 
 ---
 
@@ -51,9 +53,14 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 
 - Engine: Defold (release wasm-web), Minit SDK v1.17.0, template-based.
 - All gameplay is in `main/game.script`; geometry in `main/field.lua`, card
-  simulation in `main/cards.lua`, face pool in `main/deck.lua` (52 faces kept).
+  simulation in `main/cards.lua`, face pool in `main/deck.lua` (52 faces kept),
+  deal randomness in `main/rng.lua`.
+- A table picks **distinct ranks**: the same number or letter never appears
+  twice, so two 5s of different suits cannot be confused. The deal is seeded
+  (`seed` config), so everyone on a Post gets the same tables.
 - HUD is label game objects spawned from factories (score, clock, best, hint);
-  the hint shows the play reminder "Match pairs" between tables; match pop is
+  the hint shows the play reminder "Match pairs" between tables and flashes
+  `+10`/`+12` for 0.6 s on each match; match pop is
   `main/pop.go` + `main/pop.script`; tutorial halo is
   `main/hint_ring.go` + `main/hint_ring.script`.
 - Font: **Quicksand Bold** (`assets/fonts/quicksand_bold.ttf`), SIL OFL 1.1;
@@ -65,27 +72,41 @@ Intended fantasy / pitch: *the cards refuse to sit still*.
 
 ## 3. Current state (verified 2026-11-06)
 
-- The last commits are P1-6 (`Improve the ending hint and result captions`),
-  P1-7 (`Rewrite the store copy for players`), P1-8 (`Redesign the card back and
-  retune the HUD`) and the hint change (`Show a play hint instead of the table
-  difficulty`). Working tree is **clean**.
+- The P2 batch is committed: `Deal each table with unique card ranks`,
+  `Seed the deal and fix config parsing`, `Pause the round while the game is
+  off-screen`, `Show the points at each match`, `Align the config bounds with
+  the table`, `Keep layout reflows off the deal stream`. Working tree is
+  **clean**.
 - Build passes. Package is green: `dist/Deal With It.zip` is **2.08 MB**
-  (2,182,477 bytes), written 2026-11-06 15:02.
+  (2,184,154 bytes), written 2026-11-06 15:43.
 - The ZIP contains `meta.json` with `"title": "Deal With It"`. Its
   `THIRD-PARTY-NOTICES.txt` contains the SDK/Defold notices **plus the Quicksand
   Bold OFL 1.1 section** (see §6).
 - `game.project` has `title = Deal With It`; default **linear** texture
   filtering (the two `default_texture_*_filter = nearest` lines are gone).
 - `meta.json` description/controls/logic are the **new player copy** (P1-7,
-  1111 chars total) and the config block is unchanged (bounds are P2-4).
+  1111 chars total). The config block now matches the code: `start_pairs` 2–5,
+  `max_pairs` 3–6, `card_speed` 0.6–5, plus the new `seed` 0–999999.
+- **Config values now actually work.** A pre-existing bug made `number_config`
+  read `get_config_value(<the value>)` instead of the raw string, so every key
+  silently fell back to its default while packaging stayed green. Fixed in P2-1;
+  verified with `?round_seconds=15` (0:15 clock) and clamps
+  (`start_pairs=9` → 5 pairs).
+- The deal is seeded: `?seed=7` twice dealt the same table (Q♥, 2♣, 7♥ at the
+  same cells); `?seed=8` dealt 2♥, 3♦, 4♠. Ranks are unique per table.
+- **Pause while hidden** is wired with `minit.on_viewable_change`; verified with
+  a fake `window.minit.isViewable` host: the clock froze at 0:41 and resumed
+  afterwards. `MAX_DT = 0.25` caps the first frame after a long stall.
+- A match flashes its points in the hint ("+10"); a browser bot made a match and
+  the run ended at score 10 with one `reportResult`.
 - **The jam Post is published.** The upload title is locked. Store User Data is
   enabled and the best survived a restart in testing. This is an intentional
   test build (no gameplay, technical or legal problems); updating it means
   deleting and recreating the Post (§5).
 - **Tested on a real phone (P0-4)** — loading, first tap, audio, result screen,
-  vote screen and `?tutorial=0` behaved. Backgrounding is still the pre-P2-2
-  behaviour (the clock keeps running while hidden). The P1 changes are tested
-  in a browser at 400×600 and 320×600/640, not yet on the phone.
+  vote screen and `?tutorial=0` behaved. Backgrounding was the old behaviour
+  then; P2-2 is browser-tested only so far. The P1/P2 changes are tested in a
+  browser at 400×600 and 320×600/640, not yet on the phone.
 - `assets/cards/card_back.png` is the **new identity back** (P1-8): deep blue,
   cream pinstripe frame and a fanned pair emblem, still 139×208.
 - HUD is retuned to the Quicksand metrics (P1-8): labels render at the old
@@ -135,7 +156,8 @@ Expected tail of the report (current size, 2026-11-06):
    it from the new ZIP**, with the updated details and caption (the new
    `meta.json` copy). There is no in-place update; the organizer confirmed this
    flow is allowed until the final date. The UI prevents a second entry per
-   person.
+   person. Check the config dials on the Post now that they actually reach the
+   game (round 60, start 3, max 5, seed 1).
 3. Open the recreated Post's preview link (QR → *Generate preview link*, valid
    15 minutes) and run the P0-4 checklist on the phone again, including the
    first-result and best-score flow on the fresh Post.
@@ -155,19 +177,30 @@ The packager statically greps scripts for **literal** config keys:
 `.deps/minit/editor/minit_package.lua:449`. It also fails if `meta.json`
 declares a key no script reads literally.
 
-`read_config()` originally passed keys through the `number_config(key, ...)`
-helper, so all six keys failed. Current shape (keep it):
+`read_config()` must pass the **value** to `number_config`, not a key. The
+packager only greps for the literal `get_config_value("key", "")` call, so a
+helper that reads the config itself passes the grep while every value falls back
+to its default at runtime. That bug was real until P2-1 and packaging stayed
+green throughout. Current shape (keep it):
 
 ```lua
+local function number_config(raw, fallback, low, high)
+    local value = tonumber(raw)
+    if not value then return fallback end
+    return math.max(low, math.min(high, value))
+end
+
 local config = {
     round_seconds = number_config(minit.get_config_value("round_seconds", ""), 60, 15, 180),
-    start_pairs = math.floor(number_config(minit.get_config_value("start_pairs", ""), 3, 2, 12)),
+    start_pairs = math.floor(number_config(minit.get_config_value("start_pairs", ""), 3, 2, 5)),
     -- ...one literal key per entry
 }
 ```
 
 Any new config key needs a literal `get_config_value("key", ...)` call and a
-matching `meta.json` entry, or packaging fails.
+matching `meta.json` entry, or packaging fails. **Also test it in a build**
+(`?round_seconds=15` must show 0:15); the packager cannot tell that a value is
+ignored.
 
 The packager also checks: `report_result` is referenced, the HTML shell is the
 Minit one, the wasm is single-threaded release, ZIP ≤50 MB / ≤2000 files, and
@@ -213,8 +246,10 @@ Implications:
 | `loading_done()` | ✅ |
 | `report_result()` exactly once | ✅ |
 | `meta.json` config keys match literal reads | ✅ |
-| Same challenge per Post (seed) | ❌ P2-1 |
-| Pause when off-screen | ❌ P2-2 |
+| Same challenge per Post (seed) | ✅ P2-1, `?seed=7` twice = same table |
+| Pause when off-screen | ✅ P2-2, browser-tested with a fake viewability host |
+| Match points visible | ✅ P2-3, `+10` flashes in the hint |
+| Config values applied and bounded | ✅ P2-4, plus the `number_config` fix |
 | First-play tutorial gated on `should_show_tutorial()` | ✅ P1-4, tested with `?tutorial=0` |
 | Personal best via userData | ✅ P1-5, Store User Data on and tested |
 | Flavor text ≤64 chars | ✅ P1-6 rewrite; longest string is 32 chars |
@@ -231,7 +266,7 @@ Implications:
 | P0-2 | Notices trimmed to what the assets need: CC0 card art needs no attribution. |
 | P0-2b | `THIRD-PARTY-NOTICES.txt` restored with the Quicksand Bold OFL 1.1 text; packaging includes it. |
 | P0-3 | Build + package green; ZIP verified (2.08 MB now). |
-| P0-4 | Real-phone test passed: loading, first tap, audio, result, vote, `?tutorial=0`. Backgrounding still runs the clock (P2-2). |
+| P0-4 | Real-phone test passed: loading, first tap, audio, result, vote, `?tutorial=0`. Backgrounding then ran the clock; P2-2 added the pause, so retest it on the phone. |
 | P0-5 | Jam Post published on minit.studio; title is locked. |
 | P1-1 | First tap skips the opening peek (`cards.skip_peek`). |
 | P1-2 | First table deals 3 pairs. |
@@ -244,55 +279,12 @@ Implications:
 | P1-8 | Card back redesigned (139×208); HUD divisor fixed to `game.font` size 56; hint advance 0.58. Felt left as is (it already has a vignette). |
 | P1-9 | HUD hint shows the play reminder "Match pairs" instead of the table difficulty; `difficulty_name` removed. |
 | P2-5a | Music converted to OGG (1.92 MB → 114 KB; bundle 3.69 → 2.10 MB). |
-
-### P2 — if time remains (also long-term value)
-
-**P2-1 — Seed: same challenge for every player of a Post.**
-- `meta.json`: add `seed` (number, default 1, min 0, max 999999).
-- `game.script`: `local seed = tonumber(minit.get_config_value("seed", "")) or os.time()`
-  then `math.randomseed(seed)`; replace the `math.randomseed(os.time())` call in
-  `init()`.
-- This makes deals, directions and spawn cells identical for everyone on a Post
-  (cosmetics included), and unlocks daily seed Posts later.
-- Test: `?seed=7` twice = same table; `?seed=8` = different.
-- Acceptance: packaging green; config key is read literally.
-
-**P2-2 — Pause while off-screen.**
-- `self.unsubscribe = minit.on_viewable_change(function(viewable)
-  self.paused = not viewable end)`; `self.paused = not minit.is_viewable()`;
-  `if self.paused then return end` at the top of `update`; call the unsubscribe
-  in a new `final(self)`.
-- Acceptance: swiping away freezes the clock and cards; returning resumes; no
-  result fires while hidden.
-
-**P2-3 — Make scoring visible.**
-- Show `+10` / `+12` at the matched pair (small floating label that rises and
-  fades), or flash the hint. The streak bonus (+1 per earlier match) is currently
-  invisible.
-- Acceptance: a match gives immediate point feedback; no per-tap spam.
-
-**P2-4 — Align config bounds with what the game can do.**
-Marketable values (also use them in `meta.json`; the code clamps):
-
-| key | type | default | min | max |
-|---|---|---|---|---|
-| `round_seconds` | number | 60 | 15 | 180 |
-| `start_pairs` | number | 3 | 2 | 5 |
-| `max_pairs` | number | 5 | 3 | 6 |
-| `card_speed` | number | 2 | 0.6 | 5 |
-| `reveal_seconds` | number | 1.5 | 0.4 | 5 |
-| `score_per_pair` | number | 10 | 1 | 100 |
-| `seed` | number | 1 | 0 | 999999 |
-
-Facts: `field.MAX_PAIRS = 6`, and `field.capacity()` gives **5 pairs on a 2:3
-slot** (the app slot), so declared values above 5–6 never happen. `card_speed`
-is clamped at 0.0 in code today, which would freeze the cards; use 0.6.
-`meta.json` currently advertises `start_pairs` up to 8 and `max_pairs` up to 12 —
-both misleading.
-
-**P2-5 — Shrink the bundle.**
-- Music part is **done**: `theme.ogg` is 114 KB and the bundle is 2.08 MB.
-- Card trimming is **cancelled by decision** — all 52 faces stay.
+| Deck | Each table picks distinct ranks, so the same number or letter never appears twice. |
+| P2-1 | Seeded deal on a dedicated `main/rng.lua` stream and a `seed` config (default 1); table 7 reproduced, table 8 differed. Fixed `number_config`, so config values actually apply. |
+| P2-2 | Pause via `minit.on_viewable_change`; `final()` unsubscribes; `MAX_DT` caps the first frame after a stall. |
+| P2-3 | A match flashes its points ("+10") in the hint for 0.6 s, then "Match pairs" returns. |
+| P2-4 | Bounds: start 2–5, max 3–6, speed 0.6–5; `meta.json` matches the code. |
+| P2-5 | Bundle 2.08 MB; card trimming cancelled. |
 
 ### P3 — after the jam
 
@@ -328,6 +320,20 @@ both misleading.
   faces. Still 139×208 with transparent rounded corners.
 - Felt: **left as is**. The shipped texture already has a soft vignette; warmer
   felt was declined to avoid changing the established look.
+- Deal: **seeded** by the Post's `seed` config (default 1) on a dedicated
+  Park-Miller stream in `main/rng.lua`. Cosmetic pitch calls stay on
+  `math.random`, so they cannot perturb the deal; a layout reflow uses its own
+  stream from the same seed, so a resize cannot either.
+- Ranks are unique per table: a table never holds two suits of the same number
+  or letter.
+- Pause: `minit.on_viewable_change` flips `self.paused`; `update()` returns while
+  paused and `final()` unsubscribes. `MAX_DT = 0.25` caps the first frame after a
+  stall.
+- Scoring feedback: a match flashes `+10`/`+12` in the hint for 0.6 s; a table
+  clear or the ending cancels the flash so "Cleared!"/"Time's up!" win.
+- Config bounds: the marketable values from P2-4 are in both the code clamps and
+  `meta.json` (start 2–5, max 3–6, speed 0.6–5). The table can still lower the
+  pair count.
 - No "enjoyed it? vote below" nudge before the result.
 - Texture filtering: **linear** (the art is anti-aliased; nearest produced
   jaggies at ~1.57×).
@@ -356,9 +362,17 @@ Non-blocking:
 - The packager validates the **editor's cached** scripts: build before packaging.
 - `report_result` fires exactly once; do not add a second ending path.
 - `flavor_text` is truncated silently at 64 chars.
-- The HUD hint shares its row with the score and clock. It now reads
-  `"Match pairs"` (P1-9); keep any play hint near that length (about 11
+- Deal randomness goes through `main/rng.lua`, not `math.random`; the global
+  stream is for cosmetics only. Reflows use a fresh stream from the Post's seed.
+  `seed` 0 is mapped to 1, so it is a valid seed.
+- The HUD hint shares its row with the score and clock. It reads `"Match pairs"`
+  (P1-9) and briefly `"+N"` (P2-3); keep any play hint near that length (about 11
   characters) or it collides with the clock on a 320 px slot.
+- Pause is wired to `minit.on_viewable_change`; the browser Review pane keeps
+  background tabs "visible", so test it with a fake host (`window.minit` with
+  `isViewable`/`addEventListener`) instead of tab switching.
+- Card config values are only trustworthy after a runtime check
+  (`?round_seconds=15` → 0:15); the packager only sees literal reads (§6).
 - userData writes are ignored on a Post's replays (first result only) and on
   oversized values (>1024 bytes).
 - Do not call `report_result` before `loading_done`.
@@ -377,10 +391,10 @@ Non-blocking:
 
 Files:
 `game.project`, `meta.json`, `main/game.script`, `main/cards.lua`,
-`main/field.lua`, `main/deck.lua`, `main/pop.script`, `main/hint_ring.script`,
-`main/uncompressed/cards.atlas`, `assets/fonts/game.font`,
-`assets/fonts/quicksand_bold.ttf`, `assets/music/theme.ogg`,
-`THIRD-PARTY-NOTICES.txt`, `tools/make_music.py`.
+`main/field.lua`, `main/deck.lua`, `main/rng.lua`, `main/pop.script`,
+`main/hint_ring.script`, `main/uncompressed/cards.atlas`,
+`assets/fonts/game.font`, `assets/fonts/quicksand_bold.ttf`,
+`assets/music/theme.ogg`, `THIRD-PARTY-NOTICES.txt`, `tools/make_music.py`.
 
 Docs (all under https://minit.studio/docs/):
 `platform-requirements`, `playbook-the-minit-games-format`,
