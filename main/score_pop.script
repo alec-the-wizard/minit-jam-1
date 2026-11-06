@@ -1,0 +1,32 @@
+-- Floating "+N" left by a matched pair. Spawned by main/game.script over the
+-- last tapped card with the points and a rise in world pixels. Every label owns
+-- its own life, so two fast matches can float on screen at the same time.
+go.property("points", 10)
+go.property("rise", 60.0)
+
+local LIFE = 0.9
+local HOLD = 0.3                 -- share of the life at full opacity
+
+function init(self)
+    self.elapsed = 0
+    local position = go.get_position()
+    self.x = position.x
+    self.y = position.y
+    self.z = position.z
+    go.set("#label", "text", ("+%d"):format(self.points))
+end
+
+function update(self, dt)
+    self.elapsed = self.elapsed + dt
+    local p = math.min(1, self.elapsed / LIFE)
+    local eased = 1 - (1 - p) * (1 - p)
+    local alpha = 1
+    if p > HOLD then
+        alpha = 1 - (p - HOLD) / (1 - HOLD)
+    end
+    go.set_position(vmath.vector3(self.x, self.y + self.rise * eased, self.z))
+    go.set("#label", "color", vmath.vector4(1.0, 0.95, 0.78, alpha))
+    if p >= 1 then
+        go.delete()
+    end
+end

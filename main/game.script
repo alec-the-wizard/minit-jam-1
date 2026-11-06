@@ -20,6 +20,7 @@ local HUD_LOW_SECONDS = 10
 local TABLE_PAUSE = 0.55          -- beat between a cleared table and the next
 local BOUNCE_SOUND_GAP = 0.08
 local POP_UNITS = 2.2             -- size of the match flash
+local POINTS_RISE_UNITS = 1.8     -- how far the floating +N label drifts up
 local REPORT_DELAY_MS = 1000      -- let the last table show before the result
 local MUSIC_FADE = 0.8            -- seconds to fade the loop out at the end
 local HINT_MAX_UNITS = 8.4        -- longest hint, as a share of the screen width
@@ -34,7 +35,6 @@ local HUD_BEST_TOP_UNITS = 0.64    -- how far under the score line it sits
 local BEST_PREFIX = "v1:"          -- user data format, e.g. "v1:563"
 local BEST_FLASH = "NEW BEST!"
 local HINT_PLAY = "Match pairs"    -- how to play, shown between tables
-local HINT_FLASH_TIME = 0.6       -- how long a match shows its points in the hint
 local MAX_DT = 0.25               -- cap the frame step after a long stall or hidden tab
 local MEMORIZE_BONUS_TUTORIAL = 2.0  -- reveal multiplier while "Memorize!" is up
 local MEMORIZE_BONUS = 1.25          -- reveal multiplier on every other table
@@ -81,6 +81,16 @@ end
 
 local function spawn_pop(x, y, size)
     factory.create(msg.url("#pop_factory"), vmath.vector3(x, y, 0.5), nil, { radius = size })
+end
+
+-- A floating "+N" over the card that completed the pair. The label scales like
+-- the HUD, rises by POINTS_RISE_UNITS and manages its own fade/delete, so two
+-- quick matches can show two labels at once.
+local function spawn_score_pop(card, points)
+    local id = factory.create(msg.url("#score_pop_factory"),
+        vmath.vector3(card.x, card.y, HUD_Z + 0.1), nil,
+        { points = points, rise = POINTS_RISE_UNITS * layout.unit })
+    go.set_scale(HUD_FONT_UNITS * layout.unit / FONT_SIZE, id)
 end
 
 local function label_url(id)
@@ -228,16 +238,12 @@ local function on_pair(self, a, b)
     self.stats.streak = self.stats.streak + 1
     self.stats.best_streak = math.max(self.stats.best_streak, self.stats.streak)
 
-    -- The hint doubles as the score feedback: a short "+12" that falls back to
-    -- the play reminder. Only matches touch it, so tapping stays quiet.
-    self.flash_text = ("+%d"):format(points)
-    self.flash_timer = HINT_FLASH_TIME
-    set_hint(self, self.flash_text)
     print(("[memory] pair: +%d, score %d"):format(points, self.score))
 
     local size = POP_UNITS * layout.unit
     spawn_pop(a.x, a.y, size)
     spawn_pop(b.x, b.y, size)
+    spawn_score_pop(b, points)
     audio.play("finish", { gain = 0.45, speed = 1.0 + math.min(0.5, self.stats.streak * 0.06) })
 end
 
@@ -331,8 +337,6 @@ local function start_table(self)
     })
     local faces = deck.pick(wanted, self.rng)
     cards.spawn(self.cards, faces)
-    self.flash_timer = 0
-    self.flash_text = nil
     if self.tutorial then
         set_hint(self, "Memorize!")
         set_hud_visible(self, false)
@@ -349,8 +353,6 @@ local function clear_table(self)
     self.level = self.level + 1
     self.pairs = math.min(self.pairs + 1, self.max_pairs)
     self.next_table = TABLE_PAUSE
-    self.flash_timer = 0
-    self.flash_text = nil
     set_hint(self, "Cleared!")
     print(("[memory] table cleared, score %d, next %d pairs"):format(self.score, self.pairs))
 end
@@ -361,8 +363,6 @@ local function finish(self)
     end
     self.finished = true
     stop_tutorial(self)
-    self.flash_timer = 0
-    self.flash_text = nil
     set_hint(self, "Time's up!")
     if self.cards then
         cards.reveal_all(self.cards)
@@ -420,8 +420,6 @@ function init(self)
     self.clock_started = false
     self.low_time = false
     self.hint = ""
-    self.flash_text = nil
-    self.flash_timer = 0
     self.level = 1
     self.bounce_sound = 0
     self.music_started = false
@@ -460,17 +458,6 @@ function update(self, dt)
 
     if self.bounce_sound > 0 then
         self.bounce_sound = math.max(0, self.bounce_sound - dt)
-    end
-
-    if self.flash_timer > 0 then
-        self.flash_timer = math.max(0, self.flash_timer - dt)
-        if self.flash_timer == 0 and self.flash_text then
-            local flashed = self.flash_text
-            self.flash_text = nil
-            if self.hint == flashed then
-                set_hint(self, HINT_PLAY)
-            end
-        end
     end
 
     if not self.finished then

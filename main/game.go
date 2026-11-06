@@ -58,6 +58,12 @@ embedded_components {
   ""
 }
 embedded_components {
+  id: "score_pop_factory"
+  type: "factory"
+  data: "prototype: \"/main/score_pop.go\"\n"
+  ""
+}
+embedded_components {
   id: "ring_factory"
   type: "factory"
   data: "prototype: \"/main/hint_ring.go\"\n"
